@@ -1,0 +1,34 @@
+Team Members:
+
+Quazi Hussain (qsh2)
+Pracheer Gupta (pg298)
+Nikhil Kejriwal (nk395)
+
+
+Brainstorming to create specifications and protocols to implement a reliable and highly available service through chain replication method. (12 hours).
+
+Nikhil:  15 - 20 hours
+Brainstorming
+Implemented the Oracle
+View Generation
+parsing different kinds of messages
+Test Plan Generation
+Code Refactoring
+
+Quazi:  15 - 20 hours
+Brainstorming
+View Updation
+Changing network wrappers to implement send functions keeping the topology in mind
+Changing server code to implement Head/Tail/Middle functionality
+Unit Tests
+Code Refactoring
+
+
+Pracheer: 15 - 20 hours
+Brainstorming
+View Generation
+creating different kinds of messages
+changed the topoplogy to represent services instead of servers
+Managing accounts, updating history and syncing between servers
+Test Plan Generation
+Code Refactoring

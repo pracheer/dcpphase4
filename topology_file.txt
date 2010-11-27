@@ -1,0 +1,12 @@
+#Each line in this file will indicate a directed link between services.
+#Just the groupId_ is used here to denote any service
+#00 denotes the Oracle's group
+
+#All links mentioned here are interpreted as bidirectional
+# grp_1 grp_2
+
+01 02
+
+#Oracle needs to connect with all services/groups
+00 01
+00 02

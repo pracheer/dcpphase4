@@ -1,0 +1,18 @@
+We are using chain replication method for implementing fault tolerant highly available service for our distributed bank.
+
+A service is an abstraction of a single server, which is actually implemented as a list of servers. Updates are sent to the Head of the service and queries are sent to the tail.
+
+A View is an ordered list of servers on any service. Any addition/removal of servers causes view to be delivered to all interested parties, so that everyone knows the head and tail.
+
+The client (GUI) repeatedly sends its request to the service until it receives a response from the service. End-end argument ensures that if a response is received by the GUI, then the message is not lost in the system. 
+
+Reasons for choosing Chain replication:-
+Chain replication provides higher availability and higher throughput compared to primary backup. 
+Chain replication also allows a simpler method for adding a new server into the service.
+Any failure in CR protocol can leads to a transient outage of maximum of 2 message delivery delays compared to maximum of 5 in primary backup model. Thus CR has higher availability. 
+Also, in CR when the head/tail/middle goes down, it is not required to sync the complete history. But in P/B approach, when primary goes down, significant efforts are required to sync the system. All these make the system mode complex and thus made us more inclined to CR approach. 
+
+
+Recovery Protocol:- 
+Recovery protocol is implemented by extending the chain. In CR we require that History of current tail would be greater than equal to the History of new Tail. This is ensured if we have the chain's current tail T forward its own replica of history to the new tail. In our approach this process is not concurrent with processing of new requests by the Tail. New requests received during the sync time are buffered in the same order at the Tail. After the sync is completed the current Tail becomes a middle node and it then processes each of the buffered request. Each of this buffered request is passed on the new tail as per the CR algorithm. So the new tail after getting the history will subsequently also receives all the update and query requests as well.
+
