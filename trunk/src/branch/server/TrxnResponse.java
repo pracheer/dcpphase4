@@ -22,7 +22,7 @@ public class TrxnResponse {
 	private String snapshotResponse_;
 	
 	public static enum Type {
-		TRANSACTION, SNAPSHOT 
+		TRANSACTION
 	}
 
 	public TrxnResponse(String serialNum_, Type type, Double amt_, boolean status_,
@@ -59,12 +59,13 @@ public class TrxnResponse {
 		
 		Type type = Type.valueOf(subStrings[1]);
 		
-		if (type == Type.SNAPSHOT) {
-			return new TrxnResponse(
-					subStrings[0],
-					type,
-					subStrings[2]);
-		} else if (type == Type.TRANSACTION) {
+//		if (type == Type.SNAPSHOT) {
+//			return new TrxnResponse(
+//					subStrings[0],
+//					type,
+//					subStrings[2]);
+//		} else 
+		if (type == Type.TRANSACTION) {
 			return new TrxnResponse(
 					subStrings[0],
 					type,

@@ -14,7 +14,7 @@ public class Trxn {
 	public static final String msgSeparator = "::";
 
 	public static enum TransxType { 
-		DEPOSIT, WITHDRAW, QUERY, TRANSFER, SNAPSHOT_MARKER
+		DEPOSIT, WITHDRAW, QUERY, TRANSFER
 	}
 
 	private String serialNum_;
@@ -45,10 +45,10 @@ public class Trxn {
 			sourceAccount_ = srcAcNo;
 			destAccount_ = destAcNo;
 			break;
-		case SNAPSHOT_MARKER:
-			amount_ = 0.0;
-			sourceAccount_ = "00.00000";
-			break;
+//		case SNAPSHOT_MARKER:
+//			amount_ = 0.0;
+//			sourceAccount_ = "00.00000";
+//			break;
 		}
 
 		if (type_ == TransxType.TRANSFER) {

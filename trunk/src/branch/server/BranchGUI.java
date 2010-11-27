@@ -100,16 +100,6 @@ public class BranchGUI extends javax.swing.JFrame {
 		});
 
 		acNoLabel.setText("Account Num:");
-		
-		JButton snapshotButton = new JButton();
-		snapshotButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				snapshotButtonActionPerformed(evt);
-			}
-		});
-		snapshotButton.setText("SNAPSHOT");
-		snapshotButton.setVisible(false);
-		snapshotButton.setEnabled(false);		
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(
 				getContentPane());
@@ -124,9 +114,7 @@ public class BranchGUI extends javax.swing.JFrame {
 				.addGroup(layout.createSequentialGroup()
 					.addGap(31)
 					.addComponent(submitReqestButton)
-					.addGap(37)
-					.addComponent(snapshotButton, GroupLayout.PREFERRED_SIZE, 107, GroupLayout.PREFERRED_SIZE)
-					.addContainerGap(293, Short.MAX_VALUE))
+					.addContainerGap(437, Short.MAX_VALUE))
 				.addGroup(layout.createSequentialGroup()
 					.addGap(14)
 					.addGroup(layout.createParallelGroup(Alignment.LEADING)
@@ -145,9 +133,7 @@ public class BranchGUI extends javax.swing.JFrame {
 					.addGap(26)
 					.addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, 122, GroupLayout.PREFERRED_SIZE)
 					.addGap(24)
-					.addGroup(layout.createParallelGroup(Alignment.BASELINE)
-						.addComponent(submitReqestButton)
-						.addComponent(snapshotButton))
+					.addComponent(submitReqestButton)
 					.addGap(18)
 					.addComponent(messageLabel, GroupLayout.PREFERRED_SIZE, 29, GroupLayout.PREFERRED_SIZE)
 					.addPreferredGap(ComponentPlacement.RELATED)
@@ -533,28 +519,6 @@ public class BranchGUI extends javax.swing.JFrame {
 		updateLastSerNumCounter(serNo);
 		serialNumTextField.setText(giveNextSerNum());
 	}
-	private void snapshotButtonActionPerformed(ActionEvent evt) {
-//		Trxn transaction= null;
-//		Message msg;
-		
-//		String snapshotId  = null;
-//		snapshotCounter_ += 1;
-//		snapshotId = "S"
-//			+ String.format("%02d", properties_.getGroupId())
-//			+ String.format("%08d", snapshotCounter_);
-//		transaction = new Trxn("SNAPSHOT_MARKER",
-//				snapshotId,"0.0","00.00000","00.00000","00.00000");
-//		msg = new Message(properties_.getNode(),
-//				Message.MsgType.REQ,
-//				transaction,
-//				null);
-//		
-//		boolean sendStatus = bmh_.sendRequest(msg.toString());
-//		
-//		if (sendStatus == false) {
-//			textArea.append("GUI could not get reply from server. Unable to process request.\n"+LINE);
-//		}
-	}
 
 	public void printUserString (TrxnResponse tr)	
 	{
@@ -564,15 +528,7 @@ public class BranchGUI extends javax.swing.JFrame {
 			printMsg += (" Account balance is " + tr.getAmt()+ ". ");
 			//printMsg = (tr.getIsError()== false) ? "Transaction succeeded. " : "Transaction failed. ";
 			printMsg += tr.getErrorMsg();
-		} else {
-			
-			printMsg += ("Snapshot: " + tr.getSerialNum() 
-					+ "initiated by " 
-					+ "G" + tr.getSerialNum().substring(1,3)
-					+ " is completed.\n ");
-			String prettyString = Snapshot.getPrettyStringFromSnapshotString(tr.getSnapshotResponse());
-			printMsg += (prettyString);
-		}	
+		}
 		textArea.append(printMsg+"\n"+LINE);
 	}
 
@@ -711,17 +667,7 @@ public class BranchGUI extends javax.swing.JFrame {
 					// Print the response to the GUI text-area.
 					TrxnResponse tResponse = msg.getTrxnResponse();
 
-					if (tResponse.getType() == TrxnResponse.Type.SNAPSHOT) {
-						// Response is of a snapshot request.
-						String snapshotId = tResponse.getSerialNum();
-						String initiatingBranch = snapshotId.substring(1, 3);
-
-						// Wake-Up the GUI if the snapshot request was from this GUI.
-						if (initiatingBranch.equalsIgnoreCase(properties_.getGroupId())){
-							branchGUI.printUserString(tResponse);
-							bmh_.notifyOfResponse();
-						}
-					} else if (tResponse.getType() == TrxnResponse.Type.TRANSACTION 
+					if (tResponse.getType() == TrxnResponse.Type.TRANSACTION 
 									&& tResponse.getSerialNum().equals(BranchGUI.waitingFor_)){
 						// Wake-Up the GUI if the transaction request was from this GUI.
 						// Before waking up ensure that this response is the TrxnResponse that you were waiting for
