@@ -98,16 +98,14 @@ public class TrxnManager {
 		}
 		// Local Withdraw 
 		if (!TransactionLog.containsTrxn(trxn_.getSerialNum())) {
-			accounts_.withdraw(trxn_.getSourceAccount(), trxn_.getAmount());
+			balance = accounts_.withdraw(trxn_.getSourceAccount(), trxn_.getAmount());
 			if (trxn_.getSourceBranch().equalsIgnoreCase(trxn_.getDestBranch())) {
 				//Local Deposit
-				balance = accounts_.deposit(trxn_.getDestAccount(), trxn_.getAmount());
+				accounts_.deposit(trxn_.getDestAccount(), trxn_.getAmount());
 			}
 			TransactionLog.addTrxn(trxn_);
 		}
 		else {
-			// TODO: Bug: The first time transfer occurs, client is sent a balance.
-			// If he reexecutes his transaction, he might get a difference balance.
 			trxn_ = TransactionLog.getTrxn(trxn_.getSerialNum());
 			balance = accounts_.query(trxn_.getSourceAccount());
 		}

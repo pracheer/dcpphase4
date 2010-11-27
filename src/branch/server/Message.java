@@ -139,11 +139,11 @@ public class Message {
 	 * This is used to show the messages in the channel-state.
 	 * @return String
 	 */
-	public String getPrettyString() {
-		if (type_ == MsgType.REQ) {
-			return trxn_.getPrettyString();
-		} else {
-			return "";
-		}
-	}
+//	public String getPrettyString() {
+//		if (type_ == MsgType.REQ) {
+//			return trxn_.getPrettyString();
+//		} else {
+//			return "";
+//		}
+//	}
 }
