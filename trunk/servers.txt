@@ -1,0 +1,22 @@
+#This file indicates the port on which the node should start listening.
+
+#Format: 
+#Node ip_address portnumber
+
+#Servers
+S01_01 localhost 12350
+S01_02 localhost 12351
+S01_03 localhost 12352
+
+S02_01 localhost 12360
+S02_02 localhost 12361
+S02_03 localhost 12362
+
+#GUIs
+
+G01 localhost 12385
+G02 localhost 12386
+
+#Oracle
+Oracle localhost 12396
+

@@ -1,0 +1,34 @@
+Small description of snapshot algorithm:
+
+We have implemented a FIFO MessageQueue in the server for maintaining ordering of requests received.
+
+ 
+There are 2 threads running on Branch server-
+1. Message queuing thread/ socket thread: receives each message and puts it in the message queue
+2. Message processing thread – Pops message from the queue and processes the message
+
+For a transaction request:
+
+1.       Execute the transaction(deposit, withdraw, transfer etc) [function: Transaction.processTransaction()]
+
+2.       Update existing snapshots [function: Snapshot.updateSnapshot()]
+
+For a snapshot Request / Marker:
+
+Either initiate a new snapshot or update existing snapshots.
+
+After updating a snapshot we check whether it is completed or not. If it is completed the response is sent to the corresponding GUI.
+
+GUI generates a unique snapshot ID for each snapshot request. This snapshot ID is stored in every snapshot and used to differentiate between markers.
+
+We implement multiple (concurrent) snapshots without delaying any transaction request.
+
+Changes from Project1:
+
+To enable ordering among events in a local server, we are processing the transactions in a single thread instead of the multi-threaded system that we designed in Project1. This was required for the snapshot algorithm.
+
+We have tried to address comments mentioned in the Project1 feedback.
+
+1.       We now allow the users to provide serial numbers. But it must satisfy certain conditions like the serial number format and the also that the new serial number should be next in sequence of the used serial numbers.
+
+2.       Code cleanup.

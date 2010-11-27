@@ -1,0 +1,74 @@
+Description:
+
+GroupId is the is the Id of the service 
+To run branchserver, branch-id(id) and topology file are to be given as arguments. 
+eg: java -cp <jar file> branch.server.BranchServer -topology <filename> -id 01 -servers <filename> [-sleep <time in milliseconds>] -group 01
+
+To run Gui JVM, GUI-id(id) and topology file are to be given as arguments.
+eg: java -cp <jar file> branch.server.BranchGUI -topology <filename> -id 01 -servers <filename> -group 01
+
+To run Oracle JVM, -id Oracle and topology file are to be given as arguments.
+eg: java -cp <jar file> branch.server.Oracle -topology <filename> -id "Oracle" -servers <filename> -group 00 -config <filename>
+
+
+SLEEP TIME:We have an optional parameter called sleep while starting the server. This parameter allows the server to sleep when it processes a transaction request.
+Response to a request is generated after a "sleep time" by the server. (By Default the sleep time is 0 milliseconds)
+
+
+Test Cases:
+We have included unit testcases with our src under the test package.
+
+Besides that the following scenarios were tested manually-
+
+TEST 1:
+1. A single service was started with a single server.
+2. Oracle was configured accordingly to add the server.
+3. All transfer, deposit, withdraw and query worked fine whithin the same service.
+
+
+TEST 2: 
+1. A single service was started with 3 servers.
+2. Oracle was configured accordingly to add the servers.
+3. All transfer, deposit, withdraw and query worked fine whithin the same service.
+4. To this testcase, we now add sleep time of 10 secs to one of the servers. Whenever that server is included in the chain, the ouput is seen delayed. When that server is removed, output is instant.
+
+
+TEST 3:
+1. Two services were started with a single server each.
+2. Oracle was configured accordingly to add all the servers in their respective groups.
+3. All interbranch transfer worked fine between the two services.
+
+
+TEST4:
+1. Two services were started with each having multiple servers.
+2. Oracle was configured accordingly to add all the servers in their respective groups.
+3. All interbranch transfer worked fine between the two services.
+
+
+TEST5:
+1. A single service was started with 3 servers.
+2. Oracle was configured accordingly to add the servers.
+3. An additional server was added through Oracle. It was put at the end.
+4. All transfer, deposit, withdraw and query worked fine whithin the same service.
+5. We also observed that, history of the previous transaction was successfully trasferred to the new server. When we sent a request with an old serial number, no action was performed.
+6. all queries were returned by the tail, and the query responses were consistent with the expected history.
+
+TEST6:
+1. A single service was started with 3 servers.
+2. Oracle was configured accordingly to add the servers.
+3. We tried to removing servers from the head/tail/middle. 
+4. All transfer, deposit, withdraw and query worked fine whithin the same service.
+
+
+TEST7:
+1. A single service was started with 3 servers.
+2. Oracle was configured accordingly to add the servers.
+3. To the head a sleep of 10 secs was added.
+4. A request was sent from the GUI to this service. 
+5. While the request was pending at server 1, server 2 was killed and the oracle was updated.
+6. We observed that message was not lost.
+7. We also observed that even if server 1 failed to connect to server 2 in the first attempt, when the view got updated, the request was passed onto the tail successfully.
+8. Also all the pending requests in server 1, were passed to the successor of server2 as per the chain replication protocol.
+
+
+

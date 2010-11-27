@@ -1,0 +1,14 @@
+# Used to add/remove servers from View, file passed as command line argument to oracle
+# Format:
+# time in msecs::action::server_name 
+# Example:
+# 0::ADD::S01_01
+# 0::REMOVE::S01_01   
+
+0::ADD::S01_01
+0::ADD::S01_02
+0::ADD::S01_03
+
+0::ADD::S02_01
+0::ADD::S02_02
+0::ADD::S02_03
