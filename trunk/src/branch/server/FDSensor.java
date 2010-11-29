@@ -11,7 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
-public class FDsens implements Runnable{
+public class FDSensor implements Runnable{
 	
 	private static int default_timeout = 30000;
 	private static int timeoutInc = 10;
@@ -27,7 +27,7 @@ public class FDsens implements Runnable{
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
 	
-	public FDsens(Topology topology, String name) {
+	public FDSensor(Topology topology, String name) {
 		output_ = new Vector<String>();
 		ArrayList<String> inNeighbors = topology.getInNeighbors();
 		neighbors_ = new Vector<String>();
@@ -49,7 +49,7 @@ public class FDsens implements Runnable{
 		}
 	}
 
-	public FDsens() {
+	public FDSensor() {
 		neighbors_ = new Vector<String>();
 		neighbors_.add("A");neighbors_.add("B");neighbors_.add("C");
 		timers = new HashMap<String, Timer>();
@@ -139,7 +139,7 @@ public class FDsens implements Runnable{
 	public static void main(String[] args) {
 		try {
 //			Thread.sleep(10);
-			FDsens fdsens = new FDsens();
+			FDSensor fdsens = new FDSensor();
 			alivetimer.schedule(fdsens.new AliveMsg(), pingtime);
 			fdsens.new ListeningThread().start();
 			System.out.println("main over");

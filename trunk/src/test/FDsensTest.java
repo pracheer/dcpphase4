@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.Vector;
 
-import branch.server.FDsens;
-import branch.server.FDsens.AliveMsg;
-import branch.server.FDsens.ListeningThread;
+import branch.server.FDSensor;
+import branch.server.FDSensor.AliveMsg;
+import branch.server.FDSensor.ListeningThread;
 import junit.framework.TestCase;
 
 public class FDsensTest extends TestCase {
@@ -23,7 +23,7 @@ public class FDsensTest extends TestCase {
 	private static String msgSeparator = "::";
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
-	FDsens sensor = new FDsens();
+	FDSensor sensor = new FDSensor();
 	
 
 	public FDsensTest(String name) {
