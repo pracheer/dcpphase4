@@ -11,7 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
-public class FDsens {
+public class FDsens implements Runnable{
 	
 	private static int default_timeout = 30000;
 	private static int timeoutInc = 10;
@@ -147,6 +147,12 @@ public class FDsens {
 			e.printStackTrace();
 		}
 		
+	}
+
+	@Override
+	public void run() {
+		alivetimer.schedule(new AliveMsg(), pingtime);
+		new ListeningThread().start();
 	}
 
 }
