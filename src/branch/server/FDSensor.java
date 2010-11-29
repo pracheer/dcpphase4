@@ -13,7 +13,7 @@ import java.util.Vector;
 
 public class FDSensor implements Runnable{
 	
-	private static int default_timeout = 30000;
+	public static int default_timeout = 30000;
 	private static int timeoutInc = 10;
 	public static int pingtime = default_timeout - timeoutInc;
 	private static String msgSeparator = "::";
