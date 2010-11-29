@@ -35,40 +35,6 @@ public class MsgProcessingThread extends Thread {
 			// will block if the queue is empty.
 			Message msg = messages_.getMsg();
 
-//			if(msg.getType() == Message.MsgType.REQ && msg.getTrxn().getType() == Trxn.TransxType.SNAPSHOT_MARKER) {
-//				String snapshotId = msg.getTrxn().getSerialNum();
-//				Snapshot snapshot;
-//
-//				// Thread goes to sleep as per the properties specified.
-//				// Useful to test snapshots.
-//				if(!snapshots.containsKey(snapshotId)) {
-//					try {
-//						sleep(properties.getSleepTime());
-//					} catch (InterruptedException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//				
-//				if (!snapshots.containsKey(snapshotId)) {
-//					/* initiating a new snapshot */
-//					snapshot = new Snapshot(snapshotId, (HashMap<String, Double>) accounts_.getAllAccnts().clone());
-//					snapshots.put(snapshotId, snapshot);			
-//				}
-//
-//				snapshot = snapshots.get(snapshotId);
-//				snapshot.updateSnapshot(msg);
-//				
-//				if(snapshot.getState() == Snapshot.State.LOCALLY_COMPLETE){
-//					// Send the completed snapshot response to the GUI for display.
-//					System.out.println(snapshot.print());
-//					Message responseMessage = new Message(
-//							properties.getNode(),
-//							Message.MsgType.RESP,
-//							null,
-//							new TrxnResponse(snapshotId, TrxnResponse.Type.SNAPSHOT, snapshot.print()));
-//					NetworkWrapper.sendToGui(responseMessage.toString());
-//				}
-//			} else 
 			if (msg.getType() == Message.MsgType.REQ) { // Message is a normal Message - Request.
 				try {
 					sleep(properties.getSleepTime());
@@ -102,14 +68,6 @@ public class MsgProcessingThread extends Thread {
 					System.err.println("Server does not have a valid state.");
 				}
 
-				// update all snapshots with this msg
-//				if (!snapshots.isEmpty()) {
-//					for (Snapshot sn : snapshots.values()) {
-//						if (sn.getState() == Snapshot.State.RECORDING_CHANNELS) {
-//							sn.updateSnapshot(msg);
-//						}
-//					}
-//				}
 			} else if (msg.getType() == Message.MsgType.SPECIAL) {
 				SpecialMsg sm = msg.getSpecialMsg();
 				
