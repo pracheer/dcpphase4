@@ -3,29 +3,28 @@ package branch.server;
  * 
  * @author qsh2
  * 
- * Node structure of a branch server or a branch GUI.
+ * NodeName class.
+ * Gives a static interface for getting different components out of a node/server name.
+ * Separates out the messy string parsing.
  * 
  */
-public class NodeName {
-	private boolean gui_;
-	private int branchId_;
-	private int groupId_;
-	
+public class NodeName {	
 	public static String getService(String node) {
-		if(node.startsWith("G"))
-			return getServiceForGUI(node);
-		else if(node.startsWith("S"))
+		if(NodeName.isGui(node))
+			return getServiceForGui(node);
+		else if(NodeName.isServer(node))
 			return getServiceForServer(node);
 		return node;
 	}
 	
-	public static String getGUI(String node) {
-		if(node.startsWith("G"))
+	public static String getGui(String node) {
+		if(NodeName.isGui(node))
 			return node;
-		if(node.startsWith("S"))
-			return getGUIForService(node);
-		else 
-			return getGUIForService(node);
+		else if(NodeName.isServer(node))
+			return getGuiForService(node);
+		
+		System.err.println("getGUI called for non-server / non-gui node.");
+		return node;
 	}
 	
 	public static boolean isGui(String node) {
@@ -33,102 +32,32 @@ public class NodeName {
 	}
 	
 	public static boolean isServer(String node) {
-		return node.startsWith("S");
+		return node.startsWith("S") && node.matches("S\\d{2}_M\\d{2}");
 	}
 	
 	public static boolean isService(String node) {
-		if(!node.startsWith("G") && !node.startsWith("S"))
+		if(node.startsWith("S") && node.matches("S\\d{2}"))
 			return true;
 		return false;
 	}
 	
-	public static String getGUIForService(String service) {
-		return "G"+service;
+	public static String getGuiForService(String service) {
+		return "G" + service.substring(1,3);
 	}
 	
-	public static String getGUIForServer(String server) {
-		return "G"+server.substring(1,3);
+	public static String getGuiForServer(String server) {
+		return "G" + server.substring(1,3);
 	}
 	
-	public static String getServiceForGUI(String gui) {
-		return gui.substring(1);
+	public static String getServiceForGui(String gui) {
+		return "S" + gui.substring(1);
 	}
 	
 	public static String getServiceForServer(String server) {
-		return server.substring(1,3);
+		return server.substring(0,3);
 	}
 	
-	public static String getServerForService(String service) {
-		return "S" + service + "_01";
+	public static String getMachineForServer(String server) {
+		return server.substring(4);
 	}
-	
-	public static String getServerForGUI(String gui) {
-		return "S" + gui.substring(1, 3) + "_01";
-	}
-	
-	public NodeName() {
-	}
-	
-	public NodeName(String str) {
-		parseString(str);
-	}
-
-	public NodeName(boolean gui, int id) {
-		gui_ = gui;
-		branchId_ = id;
-	}
-	
-	private boolean setBranchId(String str) {
-		try {
-			branchId_ = Integer.parseInt(str);	
-		} catch (NumberFormatException e) {
-			return false;
-		}
-		return true;
-	}
-	
-	public boolean parseString(String str) {
-		if (str.length() != 3) {
-			return false;
-		}
-		
-		if (str.startsWith("G")) {
-			gui_ = true;
-			if (setBranchId(str.substring(1))) {
-				return true;
-			}
-		} else if (str.startsWith("S")) {
-			gui_ = false;
-			if (setBranchId(str.substring(1))) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-		
-	public String toString() {
-		String str = "";
-		if (gui_) {
-			str += "G";
-		} else {
-			str += "S";
-		}
-		str += String.format("%02d", branchId_);
-		
-		return str;
-	}
-	
-	public boolean isGui() {
-		return gui_;
-	}
-	
-	public int getBranchId() {
-		return branchId_;
-	}
-	
-	public boolean equals(NodeName node) {
-		return (gui_ == node.gui_ && branchId_ == node.branchId_);
-	}
-	
 }

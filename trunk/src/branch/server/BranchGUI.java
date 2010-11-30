@@ -35,16 +35,20 @@ import java.awt.event.ActionEvent;
  */
 public class BranchGUI extends javax.swing.JFrame {
 	public static final String LINE = "---------------------------------------------------------------------------------------------\n";
-	private static NodeProperties properties_;
+	private ServerProperties properties_;
 	
-	private static BlockingMessageHandler bmh_;
-//	private int snapshotCounter_ = 0;
+	private BlockingMessageHandler bmh_;
 	private int lastSerialNumCounter_ =0;
 	public static String waitingFor_ = null;
 	
 	/** Creates new form BranchGUI */
-	public BranchGUI() {
-		super(BranchGUI.properties_.getNode());
+	public BranchGUI(
+			ServerProperties properties,
+			BlockingMessageHandler bmh) {
+		super(properties.getServerName());
+		
+		properties_ = properties;
+		bmh_ = bmh;
 		initComponents();
 	}
 
@@ -289,7 +293,7 @@ public class BranchGUI extends javax.swing.JFrame {
 		} else if (transferButton.isSelected()) {
 			ret = "T";
 		} 
-		ret = ret + properties_.getGroupId()
+		ret = ret + properties_.getServiceId()
 			+ String.format("%08d", newSerialInt);
 		return ret;
 	}
@@ -313,7 +317,7 @@ public class BranchGUI extends javax.swing.JFrame {
 			return "Format should be [DWTQ] + branchID + 8 digit integer." ;
 		}
 		
-		if (!BranchGUI.properties_.getGroupId().equals(str.substring(1,3)))
+		if (!properties_.getServiceId().equals(str.substring(1,3)))
 			return "Format should be [DWTQ] + branchID + 8 digit integer. BranchId specified is not this branch" ;
 		
 		if (depositButton.isSelected() && str.charAt(0)!= 'D') {
@@ -344,7 +348,7 @@ public class BranchGUI extends javax.swing.JFrame {
 		return false;
 	}
 	public boolean accBelongsToThisBranch(String accNo){
-		if (BranchGUI.properties_.getGroupId().equals(accNo.substring(0, 2)))
+		if (properties_.getServiceId().equals(accNo.substring(0, 2)))
 			return true;
 		else 
 			return false;
@@ -467,7 +471,7 @@ public class BranchGUI extends javax.swing.JFrame {
 		if (!isValidSerNo(serNo)) {
 			textArea.append("Serial Number niether next in sequence nor used before. Please validate."
 					+ "Next serial number should be [DWQT]"
-					+ String.format("%02d", properties_.getGroupId())
+					+ String.format("%02d", properties_.getServiceId())
 					+ String.format("%02d", lastSerialNumCounter_ + 1)
 					+ "\n" +LINE);
 			return;
@@ -508,7 +512,7 @@ public class BranchGUI extends javax.swing.JFrame {
 			transaction = new Trxn("TRANSFER",serNo, amount, defaultAcNo, srcAcNo, destAcNo);
 		} 
 
-		msg = new Message(properties_.getNode(), Message.MsgType.REQ, transaction, null);
+		msg = new Message(properties_.getServerName(), Message.MsgType.REQ, transaction, null);
 		tempStr = msg.toString();
 		waitingFor_ = transaction.getSerialNum();
 		boolean sendStatus = bmh_.sendRequest(msg.toString(), transaction.getSerialNum());
@@ -536,9 +540,12 @@ public class BranchGUI extends javax.swing.JFrame {
 		private	Thread toWakeUp_;
 		private int waitingTime_;
 		private static final int INITIAL_WAITING_TIME = 1000;
+		private NetworkWrapper netWrapper_;
+		private String serviceId_;
 		
-		public BlockingMessageHandler() {
-			initialize();			
+		public BlockingMessageHandler(ServerProperties properties) {
+			netWrapper_ = new NetworkWrapper(properties);
+			initialize();
 		}
 		
 		private void initialize() {
@@ -554,10 +561,11 @@ public class BranchGUI extends javax.swing.JFrame {
 					
 					// Even if we fail to connect to the head, we keep on retrying.
 					// As it could be the case that head is the server that went down.
+					String serviceId = netWrapper_.getServerProperties().getServiceId();
 					if (ser_num.startsWith("Q")) {
-						NetworkWrapper.queryToServiceTail(msg, properties_.getGroupId());
+						netWrapper_.queryToServiceTail(msg, serviceId_);
 					} else {
-						NetworkWrapper.sendToService(msg, properties_.getGroupId());
+						netWrapper_.sendToService(msg, serviceId_);
 					}
 
 					Thread.sleep(waitingTime_);
@@ -594,22 +602,31 @@ public class BranchGUI extends javax.swing.JFrame {
 	}
 	
 	public static void main(String args[]) {
-		// The GUI should wait for a response of the sent request to arrive from the server.
-		// 'bmh_' is used to keep the listening-thread synchronized with the GUI thread.
-		bmh_ = new BlockingMessageHandler();
 		ServerSocket serverSocket = null;
+		MachineProperties machineProp = null;
+		ServerProperties serverProp = null;
+		BlockingMessageHandler bmh = null;
 		
 		try {
-			properties_ = new NodeProperties(args, true);
-		} catch (NodeProperties.NodePropertiesException e) {
+			machineProp = new MachineProperties(args);
+		} catch (MachineProperties.PropertiesException e) {
 			e.printStackTrace();
 			System.err.println("Unable to parse CLI for GUI");
 		}
+		serverProp = new ServerProperties(
+				machineProp.getTopology(),
+				machineProp.getServerLocations(),
+				machineProp.getServiceConfig(),
+				machineProp.getMachineName(),
+				"G01",
+				true);
 		
-		NetworkWrapper.setProperties(properties_);
+		// The GUI should wait for a response of the sent request to arrive from the server.
+		// 'bmh_' is used to keep the listening-thread synchronized with the GUI thread.
+		bmh = new BlockingMessageHandler(serverProp);
 
 		// Match the IP of the current machine with the IP provided in 'servers'
-		String myIp = properties_.getIp();
+		String myIp = serverProp.getIp();
 		if (!myIp.equals("localhost") && !myIp.equals("127.0.0.1")) {
 			InetAddress inet = null;
 			try {
@@ -626,24 +643,24 @@ public class BranchGUI extends javax.swing.JFrame {
 		}
 
 		// Check that a valid port was provided.
-		if (properties_.getPort() < 0) {
+		if (serverProp.getPort() < 0) {
 			System.err.println("port not assigned.");
 			System.exit(1);
 		}
 
 		// Create a ServerSocket for the given port.
 		try {
-			serverSocket = new ServerSocket(properties_.getPort());
+			serverSocket = new ServerSocket(serverProp.getPort());
 		} catch (IOException e){
 			System.err.println(
-					"Coult not listen to port: " + properties_.getPort());
+					"Coult not listen to port: " + serverProp.getPort());
 			//System.exit(1);
 		}
 		
-		BranchGUI branchGUI = new BranchGUI();
+		BranchGUI branchGUI = new BranchGUI(serverProp, bmh);
 		GuiThread guiThread = new GuiThread(branchGUI);
 		java.awt.EventQueue.invokeLater(guiThread);
-		System.out.println(properties_.print());
+		System.out.println(serverProp.print());
 		
 		// GUI starts listening.
 		while (true) {
@@ -672,7 +689,7 @@ public class BranchGUI extends javax.swing.JFrame {
 						// Wake-Up the GUI if the transaction request was from this GUI.
 						// Before waking up ensure that this response is the TrxnResponse that you were waiting for
 						branchGUI.printUserString(tResponse);
-						bmh_.notifyOfResponse();
+						bmh.notifyOfResponse();
 						BranchGUI.waitingFor_ = null;
 					}
 				} else if (msg.getType() == Message.MsgType.SPECIAL) {
@@ -680,7 +697,7 @@ public class BranchGUI extends javax.swing.JFrame {
 					
 					if (sm.getType() == SpecialMsg.Type.VIEW) {
 						View updatedView = sm.getView();
-						properties_.updateView(updatedView);
+						serverProp.updateView(updatedView);
 					}
 				} else {
 					// Only REQ / RESP type message is expected.

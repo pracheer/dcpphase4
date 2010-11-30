@@ -1,11 +1,15 @@
 package branch.server;
 
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
+import java.util.Iterator;
 
 /**
  * This class contains the Node location information for all the nodes in the
@@ -17,7 +21,6 @@ import java.util.HashMap;
  */
 
 public class NodeLocations {
-	
 	public static class Location {
 		private String ip_;
 		private int port_;
@@ -36,8 +39,8 @@ public class NodeLocations {
 		}
 	}
 	
-	
 	HashMap<String, Location> locationMap_;
+	
 	
 	public NodeLocations(String locationFile) throws IOException {
 		FileReader fr = null;
@@ -52,9 +55,12 @@ public class NodeLocations {
 		BufferedReader in = new BufferedReader(fr);
 		while(true) {
 			String str = in.readLine();
-			if(str!=null && (str.startsWith(Constants.COMMENT_START) || str.isEmpty()))
-				continue;
+			
 			if (str == null) break;
+
+			if(str.startsWith(Constants.COMMENT_START) || str.isEmpty()) {
+				continue;
+			}
 			
 			String[] tokens = str.split(" ");
 			
@@ -67,6 +73,22 @@ public class NodeLocations {
 		
 		in.close();
 		fr.close();
+	}
+	
+	public Vector<String> getServersForMachine(String machineName) {
+		Vector<String> servers = new Vector<String>();
+		
+		Iterator it = locationMap_.entrySet().iterator();
+		
+		while(it.hasNext()) {
+			Map.Entry<String, Location> entry = (Map.Entry<String, Location>) it.next();
+			String serverName = entry.getKey();
+			if (serverName.endsWith(machineName)) {
+				servers.add(serverName);
+			}
+		}
+		
+		return servers;
 	}
 	
 	public Location getLocationForNode(String node) {

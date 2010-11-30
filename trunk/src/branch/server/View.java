@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class View {
 	String groupId_ = null;
-
 	ArrayList<String> listOfServers = null;
 
 	public View(String groupId) {

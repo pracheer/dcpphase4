@@ -12,74 +12,65 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public abstract class NetworkWrapper {
-	private static NodeProperties properties_ = null;	
-
-	public static void setProperties(NodeProperties properties) {
+public class NetworkWrapper {
+	private ServerProperties properties_ = null;
+	private Topology tpl_ = null;
+	
+	public NetworkWrapper(ServerProperties properties) {
 		properties_ = properties;
+		tpl_ = properties.getTopology();
 	}
 	
-	public static boolean sendToService(String msg, String service) {
-		String server = null;
-		final Topology tpl = properties_.getTopology();
-		if (!tpl.isReachable(service)) {
+	public ServerProperties getServerProperties() {
+		return properties_;
+	}
+	
+	public boolean sendToService(String msg, String service) {
+		if (!properties_.isServiceReachable(service)) {
 			System.err.println("Not reachable : " + service.toString());
 			return false;
 		}
 		
-		if(properties_.views_ == null || properties_.views_.get(service)== null) {
-			System.err.println("View is empty. Service unavailable.");
-			return false;
-		}
-		
-		server = properties_.views_.get(service).getHead();
-		return send(msg, server);
+		View destView = properties_.getView(service);
+		return send(msg, destView.getHead());
 	}
 	
-	public static boolean queryToServiceTail(String msg, String service) {
-		String server = null;
-		final Topology tpl = properties_.getTopology();
-		if (!tpl.isReachable(service)) {
+	public boolean queryToServiceTail(String msg, String service) {
+		if (!properties_.isServiceReachable(service)) {
 			System.err.println("Not reachable : " + service.toString());
 			return false;
 		}
-		if(properties_.views_ == null || properties_.views_.get(service)== null) {
-			System.err.println("View is empty. Service unavailable.");
-			return false;
-		}
 		
-		server = properties_.views_.get(service).getTail();
-		return send(msg, server);
+		View destView = properties_.getView(service);
+		return send(msg, destView.getTail());
 	}
 	
-	public static boolean sendToServer(String msg, String server) {
+	public boolean sendToServer(String msg, String server) {
 		// This method is kept for backward compatibility.
 		return send(msg, server);
 	}
 	
-	public static boolean sendToGui(String msg) {
-		String destNode = NodeName.getGUI(properties_.getGroupId());
+	public boolean sendToGui(String msg) {
+		String destNode = NodeName.getGui(properties_.getServiceId());
 		return send(msg, destNode);	
 	}
 	
-	public static boolean send(String msg, String destNode) {
-		final Topology tpl = properties_.getTopology();
-		String destService = NodeName.getService(destNode);
-		if (!tpl.isReachable(destService.toString())) {
-			System.err.println("Not reachable : " + destNode.toString());
+	public boolean send(String msg, String destServer) {
+		if (!tpl_.isServerReachable(properties_.getServerName(), destServer)) {
+			System.err.println("Not reachable : " + destServer.toString());
 			return false;
 		}
 		
-		Socket destSocket = getSocketForNode(destNode);
+		Socket destSocket = getSocketForServer(destServer);
 		if (destSocket == null) {
-			System.err.println("Could not connect to : " + destNode.toString());
+			System.err.println("Could not connect to : " + destServer.toString());
 		}
 		
 		return send(msg, destSocket);
 	}
 
 	// Sends 'msg' to 'destSocket'
-	private static boolean send(String msg, Socket destSocket) {
+	private boolean send(String msg, Socket destSocket) {
 		if (destSocket == null) {
 			return false;
 		}
@@ -99,12 +90,12 @@ public abstract class NetworkWrapper {
 		return success;
 	}
 
-	private static Socket getSocketForNode(String node) {	
+	private Socket getSocketForServer(String server) {	
 		Socket s = null;
 		
 		try {
 			NodeLocations.Location serverLocation =
-				properties_.getServerLocations().getLocationForNode(node);
+				properties_.getServerLocations().getLocationForNode(server);
 			
 			if (serverLocation == null) {
 				return null;
@@ -112,11 +103,11 @@ public abstract class NetworkWrapper {
 
 			s = new Socket(serverLocation.getIp(), serverLocation.getPort());
 		} catch (UnknownHostException e) {
-			System.err.println("Could not create socket for " + node.toString());
+			System.err.println("Could not create socket for " + server.toString());
 			System.err.println(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			System.err.println("Could not create socket for " + node.toString());
+			System.err.println("Could not create socket for " + server.toString());
 			System.err.println(e.getMessage());
 			e.printStackTrace();
 		}

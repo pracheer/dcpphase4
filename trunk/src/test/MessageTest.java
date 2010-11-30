@@ -10,6 +10,10 @@ public class MessageTest extends TestCase {
 	Trxn transaction_;
 	TrxnResponse tResponse_;
 	
+	public void testNothing() {
+		
+	}
+	
 	
 //	public void testPrettyString() {
 //		String sourceNode = "G01";

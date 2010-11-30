@@ -1,4 +1,5 @@
 package branch.server;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,41 +12,29 @@ import java.util.HashMap;
  * 
  * @author qsh2
  *
- * BranchServer for the distributed banking system.
- * This is the main class in the branch server environment.
+ * BranchServerThread for the distributed banking system.
+ * This is the main thread in the branch server environment.
  * It creates a ServerSocket that accepts connection request
  * from any client.
  * When a connection is accepted, it reads the message,
  * prepares the Message object and puts it in the MsgQueue.
  * Later on the MsgProcessingThread is going to pick it up from the thread
  * and process it.
- * 
- *  Usage:
- *  To run this program you have to give
- *  -id $branch-id -topology $topology-file-location -servers $server-file-location
  */
 
 
-public class BranchServer {
-	private static NodeProperties properties_;
-	public static NodeProperties getProperties() {
-		return properties_;
+public class BranchServerThread extends Thread {
+	private ServerProperties properties_;
+	private MsgQueue messages_;
+	private ServerSocket serverSocket_ = null;
+		
+	public BranchServerThread(ServerProperties properties) {
+		properties_ = properties;
+		messages_ = new MsgQueue();
+		serverSocket_ = null;
 	}
 	
-	public static void main(String[] args) {		
-		ServerSocket serverSocket = null;
-		MsgQueue messages = new MsgQueue();
-
-		// Parse the flags to get the arguments.
-		properties_ = null;
-		try {
-			properties_ = new NodeProperties(args, false);
-		} catch (NodeProperties.NodePropertiesException e) {
-			System.err.println(e.getMessage());
-			System.exit(1);
-		}
-		NetworkWrapper.setProperties(properties_);
-		
+	public void run() {
 		String myIp = properties_.getIp();
 		if (!myIp.equals("localhost") && !myIp.equals("127.0.0.1")) {
 			InetAddress inet = null;
@@ -70,7 +59,7 @@ public class BranchServer {
 
 		// Create a ServerSocket for the given port.
 		try {
-			serverSocket = new ServerSocket(properties_.getPort());
+			serverSocket_ = new ServerSocket(properties_.getPort());
 		} catch (IOException e){
 			System.err.println(
 					"Coult not listen to port: " + properties_.getPort());
@@ -81,19 +70,13 @@ public class BranchServer {
 
 		// Initiate the TransactionThread which will wait till a message 
 		// in the messageQueue appears.
-		MsgProcessingThread tThread = new MsgProcessingThread(messages);
+		MsgProcessingThread tThread = new MsgProcessingThread(messages_, properties_);
 		tThread.start();
-
-		/*// registering with Oracle.
-		ArrayList<String> neighbors = new ArrayList<String>();
-		Collections.copy(neighbors, properties_.getTopology().getOutNeighbors());
-		new Register(properties_.getNode(), properties_.getGroupId(), neighbors);
-		*/
 		
 		// Server starts listening.
 		while (true) {
 			try {
-				Socket clientSocket = serverSocket.accept();
+				Socket clientSocket = serverSocket_.accept();
 
 				BufferedReader in = new BufferedReader(
 						new InputStreamReader(clientSocket.getInputStream()));
@@ -106,11 +89,15 @@ public class BranchServer {
 					continue;
 				}
 
-				messages.addMsg(requestMessage);
+				messages_.addMsg(requestMessage);
 			} catch (IOException e) {
 				System.err.println("Coult not accept connection.");
 				System.exit(1);
 			}
 		}
+	}
+
+	public ServerProperties getProperties() {
+		return properties_;
 	}
 }

@@ -8,7 +8,7 @@ import java.util.Vector;
 import branch.server.FlagParser;
 import branch.server.NetworkWrapper;
 import branch.server.NodeName;
-import branch.server.NodeProperties;
+import branch.server.ServerProperties;
 import branch.server.Trxn;
 
 public class Test {
@@ -19,7 +19,7 @@ public class Test {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+/*
 		try {
 			TestProperties properties = new TestProperties(args);
 			BufferedReader reader = new BufferedReader(new FileReader(properties.testFile_));
@@ -36,15 +36,16 @@ public class Test {
 				String msgStr = str.substring(index2 + Trxn.msgSeparator.length());
 				Thread.sleep(sleepTime);
 				args = ("-id "+destNode+" -topology "+properties.topologyFile_+" -servers "+properties.serverLocationFile_).split(" ");
-				NodeProperties properties_ = new NodeProperties(args, true);
+				ServerProperties properties_ = new ServerProperties(args, true);
 				NetworkWrapper.setProperties(properties_);
 				NetworkWrapper.send(msgStr, NodeName.getServerForService(destNode));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		*/
 	}
-
 }
 
 /**
