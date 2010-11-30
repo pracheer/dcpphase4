@@ -12,7 +12,6 @@ import java.util.HashMap;
  * For each transaction request, the accountDetails is updated.
  */
 public class AccDetails {
-
 	private HashMap<String, Double> accountDetails;
 
 	public AccDetails() {	

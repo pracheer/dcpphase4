@@ -1,6 +1,7 @@
 package branch.server;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * A synchronized data structure for keeping the messages.
@@ -9,24 +10,20 @@ import java.util.ArrayList;
  */
 
 public class MsgQueue {
-	ArrayList<Message> messages;
-	
-	int inCount = -1;
-	int outCount = -1;
+	Queue<Message> messages;
 	
 	public MsgQueue() {
-		messages = new ArrayList<Message>();
+		messages = new LinkedList<Message>();
 	}
 	
 	public synchronized void addMsg(Message msg) {
-		inCount ++;
 		messages.add(msg);
 		this.notify();
 	}
 	
 	public synchronized Message getMsg() {
 		// if no more messages are there than the one that have been read wait till they appear.
-		while(outCount == inCount) {
+		while (messages.size() == 0) {
 			try {
 				this.wait();
 			} catch (InterruptedException e) {
@@ -34,8 +31,6 @@ public class MsgQueue {
 			}
 		}
 		
-		outCount ++;
-		return messages.get(outCount);
+		return messages.remove();
 	}
-
 }

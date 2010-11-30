@@ -8,53 +8,54 @@ package branch.server;
  */
 
 public class TrxnManager {
-	private Trxn trxn_;
 	private AccDetails accounts_;
+	private ServerProperties properties_;
+	private NetworkWrapper netWrapper_;
 
-	public TrxnManager(Trxn ts, AccDetails accounts) {
-		trxn_ = ts;
+	public TrxnManager(AccDetails accounts, NetworkWrapper nw) {
 		accounts_ = accounts;
+		netWrapper_ = nw;
+		properties_ = netWrapper_.getServerProperties();
 	}
 
-	public TrxnResponse processTransaction() {
-
+	public TrxnResponse processTransaction(Trxn trxn) {
 		/* need to set balance, status, serial no. and Error msg in response */
 		TrxnResponse trxnResponse = null;
-		String serial_Num = trxn_.getSerialNum();
+		String serial_Num = trxn.getSerialNum();
 
 		Double balance = 0.0;
-		switch (trxn_.getType()) {
+		switch (trxn.getType()) {
 		case DEPOSIT:
 
-			if (!TransactionLog.containsTrxn(trxn_.getSerialNum())) {
-				accounts_.deposit(trxn_.getSourceAccount(), trxn_.getAmount());
-				TransactionLog.addTrxn(trxn_);
+			if (!TransactionLog.containsTrxn(trxn.getSerialNum())) {
+				accounts_.deposit(trxn.getSourceAccount(), trxn.getAmount());
+				TransactionLog.addTrxn(trxn);
 			}
-			balance = accounts_.query(trxn_.getSourceAccount());
-			trxnResponse = new TrxnResponse(trxn_.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
+			balance = accounts_.query(trxn.getSourceAccount());
+			trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
 			break;
 
 		case WITHDRAW:
 
 			if (!TransactionLog.containsTrxn(serial_Num)) {
-				accounts_.withdraw(trxn_.getSourceAccount(), trxn_.getAmount());
-				TransactionLog.addTrxn(trxn_);
+				accounts_.withdraw(trxn.getSourceAccount(), trxn.getAmount());
+				TransactionLog.addTrxn(trxn);
 			}
-			balance = accounts_.query(trxn_.getSourceAccount());
-			trxnResponse = new TrxnResponse(trxn_.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
+			balance = accounts_.query(trxn.getSourceAccount());
+			trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
 			break;
 
 		case QUERY:
 			/* not added to log, not even checked in log */
-			balance = accounts_.query(trxn_.getSourceAccount());
-			trxnResponse = new TrxnResponse(trxn_.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
+			balance = accounts_.query(trxn.getSourceAccount());
+			trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
 			break;
 
 		case TRANSFER:
-			if(trxn_.getSourceBranch().equalsIgnoreCase(BranchServer.getProperties().getGroupId())) {
-				trxnResponse = handleTransferAtSource();
-			} else if (trxn_.getDestBranch().equalsIgnoreCase(BranchServer.getProperties().getGroupId())) {
-				trxnResponse = handleTransferAtDest();
+			if(trxn.getSourceBranch().equalsIgnoreCase(properties_.getServiceId())) {
+				trxnResponse = handleTransferAtSource(trxn);
+			} else if (trxn.getDestBranch().equalsIgnoreCase(properties_.getServiceId())) {
+				trxnResponse = handleTransferAtDest(trxn);
 			} else {
 				System.err.println("Incorrect transaction");
 			}
@@ -66,63 +67,62 @@ public class TrxnManager {
 		return trxnResponse;
 	}
 
-	private TrxnResponse handleTransferAtDest() {
+	private TrxnResponse handleTransferAtDest(Trxn trxn) {
 		TrxnResponse trxnResponse;
 		Double balance;
 		// handle transfer at destination
-		if (!TransactionLog.containsTrxn(trxn_.getSerialNum())) {
-			accounts_.deposit(trxn_.getDestAccount(), trxn_.getAmount());
-			TransactionLog.addTrxn(trxn_);
+		if (!TransactionLog.containsTrxn(trxn.getSerialNum())) {
+			accounts_.deposit(trxn.getDestAccount(), trxn.getAmount());
+			TransactionLog.addTrxn(trxn);
 		}
-		balance = accounts_.query(trxn_.getDestAccount());
-		trxnResponse = new TrxnResponse(trxn_.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
+		balance = accounts_.query(trxn.getDestAccount());
+		trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
 		return trxnResponse;
 	}
 
-	private TrxnResponse handleTransferAtSource() {
+	private TrxnResponse handleTransferAtSource(Trxn trxn) {
 		TrxnResponse trxnResponse;
 		Double balance = (double) -1;
-		String destinationGrp = trxn_.getDestBranch();
+		String destService = trxn.getDestBranch();
 		
 		// See if Destination Server is reachable.
-		if (!trxn_.getDestBranch().equalsIgnoreCase(trxn_.getSourceBranch())) {
-			final Topology topology = BranchServer.getProperties().getTopology();
-			if (!topology.isReachable(destinationGrp)) {
-				trxnResponse = new TrxnResponse(trxn_.getSerialNum()
+		if (!trxn.getDestBranch().equalsIgnoreCase(trxn.getSourceBranch())) {
+			if (!properties_.isServiceReachable(destService)) {
+				trxnResponse = new TrxnResponse(trxn.getSerialNum()
 						, TrxnResponse.Type.TRANSACTION 
-						, accounts_.query(trxn_.getSourceAccount())
+						, accounts_.query(trxn.getSourceAccount())
 						, true
 						, "Error: Destination Server Not reachable in topology.");
 				return trxnResponse;
 			}
 		}
 		// Local Withdraw 
-		if (!TransactionLog.containsTrxn(trxn_.getSerialNum())) {
-			balance = accounts_.withdraw(trxn_.getSourceAccount(), trxn_.getAmount());
-			if (trxn_.getSourceBranch().equalsIgnoreCase(trxn_.getDestBranch())) {
+		if (!TransactionLog.containsTrxn(trxn.getSerialNum())) {
+			balance = accounts_.withdraw(trxn.getSourceAccount(), trxn.getAmount());
+			if (trxn.getSourceBranch().equalsIgnoreCase(trxn.getDestBranch())) {
 				//Local Deposit
-				accounts_.deposit(trxn_.getDestAccount(), trxn_.getAmount());
+				accounts_.deposit(trxn.getDestAccount(), trxn.getAmount());
 			}
-			TransactionLog.addTrxn(trxn_);
+			TransactionLog.addTrxn(trxn);
 		}
 		else {
-			trxn_ = TransactionLog.getTrxn(trxn_.getSerialNum());
-			balance = accounts_.query(trxn_.getSourceAccount());
+			trxn = TransactionLog.getTrxn(trxn.getSerialNum());
+			balance = accounts_.query(trxn.getSourceAccount());
 		}
 
 		// Deposit the amount to the destination account at different branch
-		if (!trxn_.getSourceBranch().equalsIgnoreCase(trxn_.getDestBranch())) {
-			if (BranchServer.getProperties().getState() == NodeProperties.ServerState.TAIL) {
-				Message msg = new Message(BranchServer.getProperties().getNode(),
-						Message.MsgType.REQ, trxn_, null);
+		if (!trxn.getSourceBranch().equalsIgnoreCase(trxn.getDestBranch())) {
+			if (properties_.getState() == ServerProperties.ServerState.TAIL) {
+				Message msg = new Message(properties_.getServerName(),
+						Message.MsgType.REQ, trxn, null);
 
-				if (!NetworkWrapper.sendToService(msg.toString(), destinationGrp)) {
+				if (!netWrapper_.sendToService(msg.toString(), destService)) {
 					System.err.println("Not able to send message to destination Server.");
 				}
 			}
 		}
 
-		trxnResponse = new TrxnResponse(trxn_.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
+		trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
 		return trxnResponse;
 	}
 }

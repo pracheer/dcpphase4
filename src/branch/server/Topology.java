@@ -9,11 +9,10 @@ import java.util.ArrayList;
 
 /**
  * Maintains the network topology.
- * Gives the isReachable() interface to the current node, so that it knows
- * which servers / GUIs are reachable by it. 
- * Also gives an easy interface for the snapshot generator to know the
- * incoming-channels and outgoing-channels for the current node.
- * This is given by the two methods (inNeighbors) and (outNeighbors). 
+ * 
+ *  isMachineReachable returns the connectivity between to machines / processors.
+ *  If two servers are running in two connected machines, they are connected.
+ * 
  * @author qsh2
  * 
  */
@@ -47,11 +46,8 @@ public class Topology {
 	}
 
 	final private ArrayList<Connection> connections_;
-	final private ArrayList<String> inNeighbors_;
-	final private ArrayList<String> outNeighbors_;
-	final private String group_;
 
-	public Topology(String topologyFileLocation, String group) throws IOException {
+	public Topology(String topologyFileLocation) throws IOException {
 		FileReader fr = null;
 		try {
 			fr = new FileReader(new File(topologyFileLocation));
@@ -74,63 +70,38 @@ public class Topology {
 
 		in.close();
 		fr.close();
-
-		group_ = group;
-		inNeighbors_ = whoInNeighbors(group);
-		outNeighbors_ = whoOutNeighbors(group);
 	}
 
-	public boolean isReachable(String nodeName) {
-		String destService = NodeName.getService(nodeName);
-		if(destService.equalsIgnoreCase(group_))
+	public boolean isMachineReachable(String fromMachine, String toMachine) {
+		if(fromMachine.equalsIgnoreCase(toMachine))
 			return true;
 
 		for (int i = 0; i < connections_.size(); ++i) {
 			final Connection con = connections_.get(i);
 
-			if (con.getSourceString().equalsIgnoreCase(group_) &&
-					con.getDestinationString().equalsIgnoreCase(destService)) {
+			if (con.getSourceString().equalsIgnoreCase(fromMachine) &&
+					con.getDestinationString().equalsIgnoreCase(toMachine)) {
 				return true;
 			}
 			// To insure bidirectional connection
-			if (con.getSourceString().equalsIgnoreCase(destService) &&
-					con.getDestinationString().equalsIgnoreCase(group_)) {
+			if (con.getSourceString().equalsIgnoreCase(toMachine) &&
+					con.getDestinationString().equalsIgnoreCase(fromMachine)) {
 				return true;
 			}
 		}
 		return false;
 	}
+	
+	public boolean isServerReachable(String fromServer, String toServer) {
+		if (NodeName.isGui(fromServer) || NodeName.isGui(toServer)) {
+			String fromService = NodeName.getService(fromServer);
+			String toService = NodeName.getService(toServer);
+			return fromService.equals(toService);
+		} else {
+			String fromMachine = NodeName.getMachineForServer(fromServer);
+			String toMachine = NodeName.getMachineForServer(toServer);
 
-	private ArrayList<String> whoOutNeighbors(String src) {
-		ArrayList<String> outNeighbors = new ArrayList<String>();
-
-		for (int i = 0; i < connections_.size(); ++i) {
-			final Connection curr = connections_.get(i);
-			if (curr.getSourceString().equals(src) && curr.getDestinationString().charAt(0) != 'G') {
-				outNeighbors.add(curr.getDestinationString());
-			}
+			return isMachineReachable(fromMachine, toMachine);
 		}
-		return outNeighbors;
 	}
-
-	private ArrayList<String> whoInNeighbors(String src) {
-		ArrayList<String> inNeighbors = new ArrayList<String>();
-
-		for (int i = 0; i < connections_.size(); ++i) {
-			final Connection curr = connections_.get(i);
-			if (curr.getDestinationString().equals(src) && curr.getSourceString().charAt(0) != 'G') {
-				inNeighbors.add(curr.getSourceString());
-			}
-		}
-
-		return inNeighbors;
-	}
-
-	public ArrayList<String> getInNeighbors() {
-		return inNeighbors_;
-	}
-
-	public ArrayList<String> getOutNeighbors() {
-		return outNeighbors_;
-	}	
 }

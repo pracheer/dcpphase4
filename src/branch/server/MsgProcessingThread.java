@@ -1,67 +1,62 @@
 package branch.server;
-
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Properties;
 
 /**
  * 
  * Picks up a message from MsgQueue and processes it.
- * It also implements the calling of different snapshot mechanism.
- * It contains the reference of the snapshot objects being processed.
- * If a new SNAPSHOT_MARKER comes it updates the currently running snapshot states
- * by stopping recording in an incoming channel or by creating a new snapshot process.
  * In case of a transaction request, it creates the Trxn object for it
  * and calls the processTransaction function to process the request.
- * It will also update the incoming-channel states for the pending snapshots if
- * required.
+ * In case of 
  */
 
 public class MsgProcessingThread extends Thread {
 	MsgQueue messages_;
 	PendingMessageQueue pmessages_;
 	AccDetails accounts_;
+	ServerProperties properties_;
+	TrxnManager tm_;
+	NetworkWrapper netWrapper_;
 
-	public MsgProcessingThread(MsgQueue messages) {
+	public MsgProcessingThread(MsgQueue messages, ServerProperties properties) {
 		messages_ = messages;
+		properties_ = properties;
 		pmessages_ = new PendingMessageQueue();
 		accounts_ = new AccDetails();
+		netWrapper_ = new NetworkWrapper(properties);
+		tm_ = new TrxnManager(accounts_, netWrapper_);
 	}
 
 	public void run() {
-		NodeProperties properties = BranchServer.getProperties();
-
 		while (true) {
 			// will block if the queue is empty.
 			Message msg = messages_.getMsg();
 
 			if (msg.getType() == Message.MsgType.REQ) { // Message is a normal Message - Request.
 				try {
-					sleep(properties.getSleepTime());
+					sleep(properties_.getSleepTime());
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				/* Process the transaction request */
-				TrxnManager tm = new TrxnManager(msg.getTrxn(), accounts_);
 				Message responseMessage = new Message(
-						properties.getNode(),
+						properties_.getServerName(),
 						Message.MsgType.RESP,
 						null,
-						tm.processTransaction());
+						tm_.processTransaction(msg.getTrxn()));
 
 				// Reply the GUI if the request came from him.
-				final boolean isRequestFromGui = msg.getTrxn().getSerialNum().substring(1,3).equalsIgnoreCase(properties.getGroupId());
-				NodeProperties.ServerState myState = properties.getState();
-				View myView = properties.getMyView();
+				final boolean isRequestFromGui = msg.getTrxn().getSerialNum().substring(1,3).equalsIgnoreCase(properties_.getServiceId());
+				ServerProperties.ServerState myState = properties_.getState();
+				View myView = properties_.getMyView();
 				
-				if (myState == NodeProperties.ServerState.HEAD ||
-						myState == NodeProperties.ServerState.MIDDLE) {
-					String nextNode = myView.getSuccessor(properties.getNode());
-					NetworkWrapper.sendToServer(msg.toString(), nextNode);
+				if (myState == ServerProperties.ServerState.HEAD ||
+						myState == ServerProperties.ServerState.MIDDLE) {
+					String nextNode = myView.getSuccessor(properties_.getServerName());
+					netWrapper_.sendToServer(msg.toString(), nextNode);
 					pmessages_.addMessage(msg);
-				} else if (myState == NodeProperties.ServerState.TAIL) {
+				} else if (myState == ServerProperties.ServerState.TAIL) {
 					if(isRequestFromGui) {
-						NetworkWrapper.sendToGui(responseMessage.toString());
+						netWrapper_.sendToGui(responseMessage.toString());
 					}
 					processAckMessage(msg.getTrxn().getSerialNum());
 				} else {
@@ -88,20 +83,18 @@ public class MsgProcessingThread extends Thread {
 	}
 	
 	private void processViewMessage(View view) {
-		NodeProperties properties = BranchServer.getProperties();
-		
 		// If it is my group then a few special cases.
-		if (view.getGroupId().equals(properties.getGroupId())) {
-			NodeProperties.ServerState myState = properties.getState();
-			String myNode = properties.getNode();
+		if (view.getGroupId().equals(properties_.getServiceId())) {
+			ServerProperties.ServerState myState = properties_.getState();
+			String myNode = properties_.getServerName();
 			
 			String myCurrSuccessor = null;
-			if (properties.getMyView() != null) {
-				myCurrSuccessor = properties.getMyView().getSuccessor(myNode);
+			if (properties_.getMyView() != null) {
+				myCurrSuccessor = properties_.getMyView().getSuccessor(myNode);
 			}
 			String myNewSuccessor = view.getSuccessor(myNode);
 
-			if (myState == NodeProperties.ServerState.TAIL) {
+			if (myState == ServerProperties.ServerState.TAIL) {
 				if (myNewSuccessor != null) {
 					// I am the tail, but now I have a successor.
 					// Send a SYNC message to the new tail.
@@ -109,7 +102,7 @@ public class MsgProcessingThread extends Thread {
 							accounts_.getAllAccnts(),
 							TransactionLog.getAllTransactions());
 					Message msg = new Message(myNode, new SpecialMsg(sync));
-					NetworkWrapper.sendToServer(msg.toString(), myNewSuccessor);
+					netWrapper_.sendToServer(msg.toString(), myNewSuccessor);
 					System.out.println("Sending a sync message to " + myNewSuccessor);
 					System.out.println(msg);
 				}
@@ -117,7 +110,7 @@ public class MsgProcessingThread extends Thread {
 				String destServer = myNewSuccessor == null ? myNode : myNewSuccessor;
 				ArrayList<Message> pms = pmessages_.getMessages();
 				for (int i = 0; i < pms.size(); ++i) {
-					NetworkWrapper.sendToServer(pms.get(i).toString(), destServer);
+					netWrapper_.sendToServer(pms.get(i).toString(), destServer);
 				}
 
 				if (myNewSuccessor == null) {
@@ -126,19 +119,19 @@ public class MsgProcessingThread extends Thread {
 			}
 		}
 		
-		properties.updateView(view);
+		properties_.updateView(view);
 	}
 	
 	private void processAckMessage(String serialNum) {
 		pmessages_.ackMessage(serialNum);
 		
-		String myNode = BranchServer.getProperties().getNode();
-		String myPredecessor = BranchServer.getProperties().getMyView().getPredecessor(myNode);
+		String myNode = properties_.getServerName();
+		String myPredecessor = properties_.getMyView().getPredecessor(myNode);
 		
 		Message msg = Message.getAckMessageFromSerialNumber(myNode, serialNum);
 		
 		if (myPredecessor != null) {
-			NetworkWrapper.sendToServer(msg.toString(), myPredecessor);
+			netWrapper_.sendToServer(msg.toString(), myPredecessor);
 		}
 	}
 	
