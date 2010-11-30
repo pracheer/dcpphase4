@@ -36,25 +36,25 @@ public class NodeNameTest extends TestCase {
 	}
 	
 	public void testIsServer() {
-		assertFalse(NodeName.isServer("G01"));
-		assertFalse(NodeName.isServer("G02"));
-		assertFalse(NodeName.isServer("S01_"));
-		assertFalse(NodeName.isServer("S01"));
-		assertTrue(NodeName.isServer("S01_M01"));
-		assertTrue(NodeName.isServer("S01_M02"));
-		assertTrue(NodeName.isServer("S02_M01"));
+		assertFalse(NodeName.isBranchServer("G01"));
+		assertFalse(NodeName.isBranchServer("G02"));
+		assertFalse(NodeName.isBranchServer("S01_"));
+		assertFalse(NodeName.isBranchServer("S01"));
+		assertTrue(NodeName.isBranchServer("S01_M01"));
+		assertTrue(NodeName.isBranchServer("S01_M02"));
+		assertTrue(NodeName.isBranchServer("S02_M01"));
 		
 	}
 	
 	public void testIsService() {
-		assertFalse(NodeName.isService("G01"));
-		assertFalse(NodeName.isService("G02"));
-		assertFalse(NodeName.isService("S01_M01"));
-		assertFalse(NodeName.isService("S01_M02"));
-		assertFalse(NodeName.isService("S02_M01"));
-		assertFalse(NodeName.isService("S02_"));
-		assertTrue(NodeName.isService("S01"));
-		assertTrue(NodeName.isService("S02"));
+		assertFalse(NodeName.isBranchService("G01"));
+		assertFalse(NodeName.isBranchService("G02"));
+		assertFalse(NodeName.isBranchService("S01_M01"));
+		assertFalse(NodeName.isBranchService("S01_M02"));
+		assertFalse(NodeName.isBranchService("S02_M01"));
+		assertFalse(NodeName.isBranchService("S02_"));
+		assertTrue(NodeName.isBranchService("S01"));
+		assertTrue(NodeName.isBranchService("S02"));
 	}
 	
 	public void testGetGuiForService() {

@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Maintains the network topology.
@@ -91,7 +93,7 @@ public class Topology {
 		}
 		return false;
 	}
-	
+
 	public boolean isServerReachable(String fromServer, String toServer) {
 		if (NodeName.isGui(fromServer) || NodeName.isGui(toServer)) {
 			String fromService = NodeName.getService(fromServer);
@@ -103,5 +105,17 @@ public class Topology {
 
 			return isMachineReachable(fromMachine, toMachine);
 		}
+	}
+
+	public Set<String> getNeighbors(String machineName) {
+		Set<String> neighbors = new HashSet<String>();
+		for (Connection con : connections_) {
+			if(con.getDestinationString().equals(machineName))
+				neighbors.add(con.getSourceString());
+			else if (con.getSourceString().equals(machineName))
+				neighbors.add(con.getDestinationString());
+		}
+		
+		return neighbors;
 	}
 }

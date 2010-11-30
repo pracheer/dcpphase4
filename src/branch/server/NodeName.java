@@ -1,4 +1,7 @@
 package branch.server;
+
+import java.util.Vector;
+
 /**
  * 
  * @author qsh2
@@ -12,7 +15,7 @@ public class NodeName {
 	public static String getService(String node) {
 		if(NodeName.isGui(node))
 			return getServiceForGui(node);
-		else if(NodeName.isServer(node))
+		else if(NodeName.isBranchServer(node))
 			return getServiceForServer(node);
 		return node;
 	}
@@ -20,7 +23,7 @@ public class NodeName {
 	public static String getGui(String node) {
 		if(NodeName.isGui(node))
 			return node;
-		else if(NodeName.isServer(node))
+		else if(NodeName.isBranchServer(node))
 			return getGuiForService(node);
 		
 		System.err.println("getGUI called for non-server / non-gui node.");
@@ -31,14 +34,28 @@ public class NodeName {
 		return node.startsWith("G");
 	}
 	
-	public static boolean isServer(String node) {
+	public static boolean isBranchServer(String node) {
 		return node.startsWith("S") && node.matches("S\\d{2}_M\\d{2}");
 	}
 	
-	public static boolean isService(String node) {
+	public static boolean isBranchService(String node) {
 		if(node.startsWith("S") && node.matches("S\\d{2}"))
 			return true;
 		return false;
+	}
+	
+	public static boolean isFailureDetectionServer(String server) {
+		return server.startsWith("F");
+	}
+
+	public static boolean isFailureDetectionService(String service) {
+		return service.startsWith("F") && service.charAt(3)=='_';
+	}
+
+	public static String getFailureDetectionService(String failureDetServer) {
+		if(!failureDetServer.startsWith("F") || failureDetServer.charAt(3)!='_' || failureDetServer.length()!=7)
+			return null;
+		return failureDetServer.substring(0, 3);
 	}
 	
 	public static String getGuiForService(String service) {
@@ -60,4 +77,14 @@ public class NodeName {
 	public static String getMachineForServer(String server) {
 		return server.substring(4);
 	}
+
+	public static String getFailureDetectionServer(
+			Vector<String> serversForMachine) {
+		for (String server : serversForMachine) {
+			if(isFailureDetectionServer(server))
+				return server;
+		}
+		return null;
+	}
+	
 }

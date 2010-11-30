@@ -4,9 +4,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -19,21 +20,23 @@ public class FDSensor implements Runnable{
 	private static String msgSeparator = "::";
 	
 	Vector<String> output_;
-	Vector<String> neighbors_;
+	Set<String> neighbors_;
 	HashMap<String, Integer> timeouts_;
 	HashMap<String, Date> lastListen;
 	String name_;
 
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
+	private MachineProperties properties;
+	private String myMachineName;
 	
-	public FDSensor(Topology topology, String name) {
+	public FDSensor(MachineProperties properties, String name) {
 		output_ = new Vector<String>();
-		ArrayList<String> inNeighbors = topology.getInNeighbors();
-		neighbors_ = new Vector<String>();
-		for (String string : inNeighbors) {
-			neighbors_.add(string);
-		}
+		this.properties = properties;
+		myMachineName = this.properties.getMachineName();
+		
+		neighbors_ = this.properties.getTopology().getNeighbors(myMachineName);
+		
 		timers = new HashMap<String, Timer>();
 		output_ = new Vector<String>();
 		lastListen = new HashMap<String, Date>();
@@ -50,7 +53,7 @@ public class FDSensor implements Runnable{
 	}
 
 	public FDSensor() {
-		neighbors_ = new Vector<String>();
+		neighbors_ = new HashSet<String>();
 		neighbors_.add("A");neighbors_.add("B");neighbors_.add("C");
 		timers = new HashMap<String, Timer>();
 		output_ = new Vector<String>();
@@ -60,6 +63,7 @@ public class FDSensor implements Runnable{
 		for (String neighbor : neighbors_) {
 			timeouts_.put(neighbor, default_timeout); // 10000 ms.
 		}
+		
 		for (String neighbor : neighbors_) {
 			Timer timer = new Timer();
 			timer.schedule(new TimeoutCheck(neighbor), default_timeout);

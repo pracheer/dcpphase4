@@ -22,6 +22,15 @@ public class View {
 		return listOfServers.remove(server);
 	}
 	
+	public void addMachine(String machine) {
+		// TODO
+	}
+
+	public boolean removeMachine(String machine) {
+		// TODO
+		return false;
+	}
+	
 	public String getGroupId() {
 		return groupId_;
 	}
