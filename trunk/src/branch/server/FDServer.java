@@ -15,40 +15,43 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
+import branch.server.NodeLocations.Location;
+
 public class FDServer implements Runnable {
 
 	private static String serverInitMsg = "INIT_FROM_SERVER";
 	private static String sensorInitMsg = "INIT_FROM_SENSOR";
 
 	private FDSensor sensor;
-	private String myName;
+	private String myMachineName;
 	private Vector<String> prev_suspects;
-	private Topology topology;
-	private boolean received_init = false;
 	public static int sleep_interval = 10000;
-	ArrayList<String> neighbors;
+	Set<String> neighbors;
 	Semaphore listenSema = new Semaphore(0);
 	Semaphore initSema = new Semaphore(0);
 	private boolean init_from_server = false;
 	private boolean init_from_sensor = false;
 	HashMap<String, Vector<String>> vp;
 	private ServerSocket serverSocket;
-	private NodeProperties properties_;
+	private MachineProperties properties;
+	private String myServerName;
 
-	public FDServer(NodeProperties properties, FDSensor sensor, int port) {
+	public FDServer(MachineProperties properties, FDSensor sensor, int port) {
 
 		vp = new HashMap<String, Vector<String>>();
-		this.topology = properties.getTopology();
-		this.properties_ = properties;
-		myName = properties_.getNode();
+		this.properties = properties;
+		myMachineName = this.properties.getMachineName();
+		
+		myServerName = NodeName.
+			getFailureDetectionServer(this.properties.getServerLocations().
+										getServersForMachine(myMachineName));
+		
+		neighbors = this.properties.getTopology().getNeighbors(myMachineName);
 		this.sensor = sensor;
-		neighbors = topology.getInNeighbors();
 		prev_suspects = new Vector<String>();
 		try {
 			serverSocket = new ServerSocket(port);
 		} catch (IOException e) {
-			//TODO complete the error msg
-			System.err.println("Cant create socket for ...");
 			e.printStackTrace();
 		}
 	}
@@ -61,22 +64,28 @@ public class FDServer implements Runnable {
 
 				if(init_from_sensor) {
 					// send server init msg to all FD servers
-					sendToDummyNeighbors(serverInitMsg);
+					sendToNeighbors(serverInitMsg);
 				}
 				
 				Vector<String> proposed_suspects = sensor.getOutput();
-				vp.put(myName, proposed_suspects);
+				vp.put(myMachineName, proposed_suspects);
 
 				// send this servers suspect list to all neighbors.
-				Suspects obj = new Suspects(myName, proposed_suspects);
+				Suspects obj = new Suspects(myMachineName, proposed_suspects);
 				String msg = obj.toString();
-				sendToDummyNeighbors(msg);
+				sendToNeighbors(msg);
 
 				// TODO check the socket timeout.
 				serverSocket.setSoTimeout(sleep_interval);
 				listenSema.wait();
 				Vector<String> new_suspects = consensusProtocol();
 				if(!new_suspects.equals(prev_suspects)) {
+					System.out.print("new suspected list is - ");
+					for (String new_suspect : new_suspects) {
+						System.out.print(new_suspect + ",");
+					}
+					System.out.println("");
+					
 					// update views
 					//TODO need to send the new suspects to all the branch servers running on this machine.
 				}
@@ -87,24 +96,14 @@ public class FDServer implements Runnable {
 		}
 	}
 
-	private void sendToDummyNeighbors(String msg) {
+	private void sendToNeighbors(String msg) {
 		try {
-/*			ArrayList<String> inNeighbors = topology.getInNeighbors();
-			for (String neighbor : inNeighbors) {
-				// TODO send the init message.
+			for (String neighbor : neighbors) {
+				Location locationForNode = properties.getServerLocations().getLocationForNode(neighbor);
+				Socket socket = new Socket(locationForNode.getIp(), locationForNode.getPort());
+				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+				out.println(msg);
 			}
-*/
-			Socket socket = new Socket("localhost", 10003);
-			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			out.println(msg);
-			
-			socket = new Socket("localhost", 10004);
-			out = new PrintWriter(socket.getOutputStream(), true);
-			out.println(msg);
-			
-			socket = new Socket("localhost", 10005);
-			out = new PrintWriter(socket.getOutputStream(), true);
-			out.println(msg);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

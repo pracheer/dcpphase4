@@ -1,11 +1,7 @@
 package branch.server;
 
 import java.io.IOException;
-
-import java.util.HashMap;
 import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 
@@ -19,14 +15,19 @@ import java.util.regex.Pattern;
  */
 public class MachineProperties {
 	private final Topology topology_;
-	private final NodeLocations serverLocations_;	
-	private ServiceConfig serviceConfig_;
+	private final NodeLocations serverLocations_;
+	
+	// has the config of all the services in the entire system
+	// as per the config file.
+	private ServiceConfig serviceConfig_; 
+	
 	private String machine_;
 
 	private String topologyFile_;		//  topology.txt
 	private String serverLocationFile_;	//  servers.txt 
 	private String serviceConfigFile_;	//  config.txt
 
+	@SuppressWarnings("serial")
 	public static class PropertiesException extends Exception {
 		public PropertiesException(String error) {
 			super(error);
