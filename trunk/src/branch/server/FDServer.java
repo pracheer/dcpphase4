@@ -3,12 +3,15 @@ package branch.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Properties;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
@@ -16,10 +19,9 @@ public class FDServer implements Runnable {
 
 	private static String serverInitMsg = "INIT_FROM_SERVER";
 	private static String sensorInitMsg = "INIT_FROM_SENSOR";
-	private static String msgSeparator = "::";
-	
 
 	private FDSensor sensor;
+	private String myName;
 	private Vector<String> prev_suspects;
 	private Topology topology;
 	private boolean received_init = false;
@@ -29,78 +31,112 @@ public class FDServer implements Runnable {
 	Semaphore initSema = new Semaphore(0);
 	private boolean init_from_server = false;
 	private boolean init_from_sensor = false;
-	HashMap<String, ArrayList<String>> vp;
+	HashMap<String, Vector<String>> vp;
 	private ServerSocket serverSocket;
 	private NodeProperties properties_;
 
-	public FDServer(NodeProperties properties, FDSensor sensor) {
+	public FDServer(NodeProperties properties, FDSensor sensor, int port) {
 
-		vp = new HashMap<String, ArrayList<String>>();
+		vp = new HashMap<String, Vector<String>>();
 		this.topology = properties.getTopology();
 		this.properties_ = properties;
+		myName = properties_.getNode();
 		this.sensor = sensor;
 		neighbors = topology.getInNeighbors();
 		prev_suspects = new Vector<String>();
 		try {
-			serverSocket = new ServerSocket(10002);
+			serverSocket = new ServerSocket(port);
 		} catch (IOException e) {
 			//TODO complete the error msg
 			System.err.println("Cant create socket for ...");
 			e.printStackTrace();
 		}
-
 	}
 
 	public void run() {
 		while(true) {
 			try {
-				//				Thread.sleep(sleep_interval);
-				//				Vector<String> newsuspects = sensor.getOutput();
-				//				if(newsuspects.equals(prev_suspects) && !received_init)
-				//					continue;
 				serverSocket.setSoTimeout(0);
 				initSema.wait();
 
 				if(init_from_sensor) {
-					sendinit();
+					// send server init msg to all FD servers
+					sendToDummyNeighbors(serverInitMsg);
 				}
 				
-				sendSuspects();
+				Vector<String> proposed_suspects = sensor.getOutput();
+				vp.put(myName, proposed_suspects);
+
+				// send this servers suspect list to all neighbors.
+				Suspects obj = new Suspects(myName, proposed_suspects);
+				String msg = obj.toString();
+				sendToDummyNeighbors(msg);
+
+				// TODO check the socket timeout.
+				serverSocket.setSoTimeout(sleep_interval);
 				listenSema.wait();
-				consesusProtocol();
-				//TODO IF the FDServer detects a addition/deletion
-				// in a push model it needs to inform everyone
+				Vector<String> new_suspects = consensusProtocol();
+				if(!new_suspects.equals(prev_suspects)) {
+					// update views
+					//TODO need to send the new suspects to all the branch servers running on this machine.
+				}
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	private void sendSuspects() {
-		//TODO my name
-		String msg = properties_.getNode();
-		msg = msg + msgSeparator + "SUSPECTS";
-		Vector<String> suspects = sensor.getOutput();
-		for (String suspect : suspects) {
-			msg += msgSeparator + suspect;
-		}
-		for (String neighbour : neighbors) {
-			//TODO networkwrapper.send(msg, neighbors)
+
+	private void sendToDummyNeighbors(String msg) {
+		try {
+/*			ArrayList<String> inNeighbors = topology.getInNeighbors();
+			for (String neighbor : inNeighbors) {
+				// TODO send the init message.
+			}
+*/
+			Socket socket = new Socket("localhost", 10003);
+			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+			out.println(msg);
+			
+			socket = new Socket("localhost", 10004);
+			out = new PrintWriter(socket.getOutputStream(), true);
+			out.println(msg);
+			
+			socket = new Socket("localhost", 10005);
+			out = new PrintWriter(socket.getOutputStream(), true);
+			out.println(msg);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
-	private void consesusProtocol (){
-		//TODO iterate over Vp
-		// Check 
-	}
-	private void sendinit() {
-		// send server init msg to all FD servers
-		ArrayList<String> inNeighbors = topology.getInNeighbors();
-		for (String neighbor : inNeighbors) {
-			// TODO send the init message.
+	private Vector<String> consensusProtocol (){
+		Set<String> machines = vp.keySet();
+		Set<String> setOfSuspects = new HashSet<String>();
+		Collection<Vector<String>> vectors = vp.values();
+		
+		for (String machine : machines) {
+			Vector<String> machine_suspects = vp.get(machine);
+			setOfSuspects.addAll(machine_suspects);
 		}
-	}
 
+		System.out.println("doing consensus on the suspected set");
+		
+		Vector<String> new_suspects = new Vector<String>();
+		for (String suspect : setOfSuspects) {
+			int count = 0;
+			for (Vector<String> vector : vectors) {
+				if(vector.contains(suspect))
+					count +=1;
+			}
+			if(count >= (machines.size()/2 + 1)) { // majority protocol
+				new_suspects.add(suspect);
+			}
+		}
+		
+		return new_suspects;
+	}
+	
 	class listenInit implements Runnable {
 
 		public void run() {
@@ -116,8 +152,7 @@ public class FDServer implements Runnable {
 				} catch (SocketTimeoutException  e) {
 					listenSema.notify();
 				} catch (Exception e) {
-					//TODO get the msg correct
-					System.err.println("SOMe error");
+					e.printStackTrace();
 				}
 
 				if(str.equals(serverInitMsg) && !init_from_server && !init_from_sensor) {
@@ -132,14 +167,16 @@ public class FDServer implements Runnable {
 				} else {
 					if(str.equals(serverInitMsg) || str.equals(sensorInitMsg))
 						continue;
-					// TODO parse meg and set Vp
-//					Vector<String> parseStr(str);
+					
+					Suspects objsuspects = Suspects.parseSuspectsString(str);
+					
+					vp.put(objsuspects.getNodeName(), objsuspects.getSuspects());
+					
 					receivedCount += 1;
 					if (receivedCount == neighbors.size()- 1) {
 						listenSema.notify();
 					}	
 				}
-				
 			}
 		}
 	}
