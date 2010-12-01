@@ -18,7 +18,6 @@ import branch.server.NodeLocations.Location;
 
 public class FDSensor implements Runnable{
 
-	// TODO
 	public static int default_timeout = 560;
 	private static int timeoutInc = (int) (0.1 * default_timeout);
 	public static int pingtime = 500;

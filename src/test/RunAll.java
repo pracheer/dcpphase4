@@ -18,7 +18,6 @@ public class RunAll {
 			runtime.exec("java branch.server.BranchGUI " +args1);
 			runtime.exec("java branch.server.BranchGUI " +args2);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
