@@ -45,10 +45,7 @@ public class Trxn {
 			sourceAccount_ = srcAcNo;
 			destAccount_ = destAcNo;
 			break;
-//		case SNAPSHOT_MARKER:
-//			amount_ = 0.0;
-//			sourceAccount_ = "00.00000";
-//			break;
+
 		}
 
 		if (type_ == TransxType.TRANSFER) {
@@ -71,13 +68,13 @@ public class Trxn {
 	}
 
 	protected Trxn(String str) {
-		String[] subStrings = str.split(msgSeparator);
-		type_ = TransxType.valueOf(subStrings[0]);
-		serialNum_ = subStrings[1];
-		sourceAccount_ = subStrings[2];
-		amount_ = Double.parseDouble(subStrings[3]);
+		String[] strs = str.split(msgSeparator);
+		type_ = TransxType.valueOf(strs[0]);
+		serialNum_ = strs[1];
+		sourceAccount_ = strs[2];
+		amount_ = Double.parseDouble(strs[3]);
 		if (type_ == TransxType.TRANSFER) {
-			destAccount_ = subStrings[4];
+			destAccount_ = strs[4];
 		}
 	}
 

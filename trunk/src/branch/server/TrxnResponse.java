@@ -55,23 +55,18 @@ public class TrxnResponse {
 	}
 
 	public static TrxnResponse parseString(String str) {		
-		String[] subStrings = str.split(Trxn.msgSeparator);
+		String[] strs = str.split(Trxn.msgSeparator);
 		
-		Type type = Type.valueOf(subStrings[1]);
+		Type type = Type.valueOf(strs[1]);
 		
-//		if (type == Type.SNAPSHOT) {
-//			return new TrxnResponse(
-//					subStrings[0],
-//					type,
-//					subStrings[2]);
-//		} else 
+
 		if (type == Type.TRANSACTION) {
 			return new TrxnResponse(
-					subStrings[0],
+					strs[0],
 					type,
-					Double.parseDouble(subStrings[2]),
-					Boolean.valueOf(subStrings[4]),
-					subStrings[3]);
+					Double.parseDouble(strs[2]),
+					Boolean.valueOf(strs[4]),
+					strs[3]);
 		} else {
 			System.err.println("Could not parse TransactionResponse: " + str);
 			return null;

@@ -42,7 +42,7 @@ public class ServerProperties extends MachineProperties {
 		
 		serverName_ = serverName;
 		service_ = NodeName.getService(serverName);
-		
+		computeAndUpdateState();
 		// TODO: set sleep to 0 for now. Get it from the config instead.
 		sleep_ = 0;
 	}	
@@ -132,7 +132,33 @@ public class ServerProperties extends MachineProperties {
 			}
 		}
 	}
-
+	public void computeAndUpdateState() {
+		ServerState oldState = getState();
+		View view = super.getServiceConfig().getViews().get(service_);
+			
+		// Update the state of the server if relevant.
+		if(service_.equalsIgnoreCase(view.getGroupId()) && !isGui_) {
+			String myNewSuccessor = view.getSuccessor(serverName_);
+			if(oldState == ServerState.TAIL) {
+				if(myNewSuccessor != null) {
+					if (view.getPredecessor(serverName_) != null) {
+						updateState(ServerProperties.ServerState.MIDDLE);
+					} else {
+						updateState(ServerProperties.ServerState.HEAD);
+					}
+				}
+			}
+			else {
+				if (myNewSuccessor == null) {
+					updateState(ServerProperties.ServerState.TAIL);
+				} else if (view.getPredecessor(serverName_) == null) {
+					updateState(ServerProperties.ServerState.HEAD);
+				} else {
+					updateState(ServerProperties.ServerState.MIDDLE);
+				}
+			}
+		}
+	}
 	public void updateState(ServerState state) {
 		serverState_ = state;
 	}

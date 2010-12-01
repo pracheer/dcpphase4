@@ -546,6 +546,7 @@ public class BranchGUI extends javax.swing.JFrame {
 		public BlockingMessageHandler(ServerProperties properties) {
 			netWrapper_ = new NetworkWrapper(properties);
 			initialize();
+			serviceId_ = netWrapper_.getServerProperties().getServiceId();
 		}
 		
 		private void initialize() {
@@ -561,7 +562,6 @@ public class BranchGUI extends javax.swing.JFrame {
 					
 					// Even if we fail to connect to the head, we keep on retrying.
 					// As it could be the case that head is the server that went down.
-					String serviceId = netWrapper_.getServerProperties().getServiceId();
 					if (ser_num.startsWith("Q")) {
 						netWrapper_.queryToServiceTail(msg, serviceId_);
 					} else {
@@ -613,12 +613,14 @@ public class BranchGUI extends javax.swing.JFrame {
 			e.printStackTrace();
 			System.err.println("Unable to parse CLI for GUI");
 		}
+		
+		// TODO
 		serverProp = new ServerProperties(
 				machineProp.getTopology(),
 				machineProp.getServerLocations(),
 				machineProp.getServiceConfig(),
 				machineProp.getMachineName(),
-				"G01",
+				machineProp.getMachineName(),
 				true);
 		
 		// The GUI should wait for a response of the sent request to arrive from the server.
