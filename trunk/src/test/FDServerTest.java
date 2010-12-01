@@ -30,7 +30,7 @@ public class FDServerTest extends TestCase {
 		news.add("M05");
 		news.add("M06");
 		
-		FDServer.getMachinesToChange(prvs, news, toadd, torem);
+//		FDServer.getMachinesToChange(prvs, news, toadd, torem);
 		
 		assertEquals("M05", toadd.get(0));
 		assertEquals("M06", toadd.get(1));
