@@ -33,10 +33,12 @@ public class NodeName {
 		if(NodeName.isGui(node))
 			return node;
 		else if(NodeName.isBranchServer(node))
+			return getGuiForServer(node);
+		else if(NodeName.isBranchService(node))
 			return getGuiForService(node);
 		
 		System.err.println("getGUI called for non-server / non-gui node.");
-		return node;
+		return null;
 	}
 	
 	public static boolean isGui(String node) {

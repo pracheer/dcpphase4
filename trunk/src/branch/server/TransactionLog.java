@@ -9,17 +9,17 @@ import java.util.HashMap;
 
 public class TransactionLog {
 	
-	private static HashMap<String, Trxn> trxnLog = new HashMap<String, Trxn>();
+	private HashMap<String, Trxn> trxnLog = new HashMap<String, Trxn>();
 
-	public static void addTrxn(Trxn transaction) {
+	public void addTrxn(Trxn transaction) {
 		trxnLog.put(transaction.getSerialNum(), transaction);
 	}
 	
-	public static boolean containsTrxn(String serialNum) {
+	public boolean containsTrxn(String serialNum) {
 		return trxnLog.containsKey(serialNum);
 	}
 	
-	public static Trxn getTrxn(String serialNum) {
+	public Trxn getTrxn(String serialNum) {
 		if (containsTrxn(serialNum)) {
 			return trxnLog.get(serialNum);
 		}
@@ -28,11 +28,11 @@ public class TransactionLog {
 		
 	}
 	
-	public static HashMap<String, Trxn> getAllTransactions() {
+	public HashMap<String, Trxn> getAllTransactions() {
 		return (HashMap<String, Trxn>) trxnLog.clone();
 	}
 	
-	public static void synchronizeTransactionLog(Sync sync) {
+	public void synchronizeTransactionLog(Sync sync) {
 		trxnLog = sync.getTransactionLogs();
 	}
 }

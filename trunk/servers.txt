@@ -12,12 +12,17 @@
 
 03_M03 localhost 12364
 
+04_M04 localhost 12371
+04_M05 localhost 12373
+
+05_M05 localhost 12381
+05_M04 localhost 12382
+
 #GUIs
 
 G01 localhost 12385
 G02 localhost 12386
 G03 localhost 12387
-
-#Oracle
-Oracle localhost 12396
+G04 localhost 12388
+G05 localhost 12389
 

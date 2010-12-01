@@ -81,11 +81,12 @@ public class BranchServerThread extends Thread {
 				BufferedReader in = new BufferedReader(
 						new InputStreamReader(clientSocket.getInputStream()));
 				String msg = in.readLine();
+				System.out.print(properties_.getServerName() + " : ");
 				Message requestMessage = Message.parseString(msg);
 
 				// Branch server does not expect response type messages.
 				if (requestMessage.getType() == Message.MsgType.RESP) {
-					System.err.println("Received response: " + msg);
+					System.err.println(properties_.getServerName()+ ": Received response: " + msg);
 					continue;
 				}
 
