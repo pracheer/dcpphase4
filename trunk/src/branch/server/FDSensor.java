@@ -27,15 +27,13 @@ public class FDSensor implements Runnable{
 
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
-	private MachineProperties properties;
 	private String myMachineName;
 	
-	public FDSensor(MachineProperties properties, String name) {
+	public FDSensor(String machineName, Set<String> neighbors) {
 		output_ = new Vector<String>();
-		this.properties = properties;
-		myMachineName = this.properties.getMachineName();
+		myMachineName = machineName;
 		
-		neighbors_ = this.properties.getTopology().getNeighbors(myMachineName);
+		neighbors_ = neighbors;
 		
 		timers = new HashMap<String, Timer>();
 		output_ = new Vector<String>();
@@ -45,25 +43,6 @@ public class FDSensor implements Runnable{
 		for (String neighbor : neighbors_) {
 			timeouts_.put(neighbor, default_timeout); // 10000 ms.
 		}
-		for (String neighbor : neighbors_) {
-			Timer timer = new Timer();
-			timer.schedule(new TimeoutCheck(neighbor), default_timeout);
-			timers.put(neighbor, timer);
-		}
-	}
-
-	public FDSensor() {
-		neighbors_ = new HashSet<String>();
-		neighbors_.add("A");neighbors_.add("B");neighbors_.add("C");
-		timers = new HashMap<String, Timer>();
-		output_ = new Vector<String>();
-		lastListen = new HashMap<String, Date>();
-		timeouts_ = new HashMap<String, Integer>();
-		
-		for (String neighbor : neighbors_) {
-			timeouts_.put(neighbor, default_timeout); // 10000 ms.
-		}
-		
 		for (String neighbor : neighbors_) {
 			Timer timer = new Timer();
 			timer.schedule(new TimeoutCheck(neighbor), default_timeout);
@@ -143,10 +122,13 @@ public class FDSensor implements Runnable{
 	public static void main(String[] args) {
 		try {
 //			Thread.sleep(10);
-			FDSensor fdsens = new FDSensor();
-			alivetimer.schedule(fdsens.new AliveMsg(), pingtime);
-			fdsens.new ListeningThread().start();
-			System.out.println("main over");
+			
+			HashSet<String> neighbors = new HashSet<String>() ;
+			neighbors.add("02");neighbors.add("03");neighbors.add("04");
+			String myMachineName = "01"; 
+			FDSensor fdsens = new FDSensor(myMachineName, neighbors);
+			Thread sthread = new Thread(fdsens);
+			sthread.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

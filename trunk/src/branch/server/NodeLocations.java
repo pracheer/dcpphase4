@@ -78,16 +78,15 @@ public class NodeLocations {
 	public Vector<String> getServersForMachine(String machineName) {
 		Vector<String> servers = new Vector<String>();
 		
-		Iterator it = locationMap_.entrySet().iterator();
+		Iterator<Map.Entry<String, Location>> it = locationMap_.entrySet().iterator();
 		
 		while(it.hasNext()) {
-			Map.Entry<String, Location> entry = (Map.Entry<String, Location>) it.next();
+			Map.Entry<String, Location> entry = it.next();
 			String serverName = entry.getKey();
 			if (serverName.endsWith(machineName)) {
 				servers.add(serverName);
 			}
 		}
-		
 		return servers;
 	}
 	
