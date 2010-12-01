@@ -1,65 +1,79 @@
 package branch.server;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import branch.server.NodeLocations.Location;
+
 public class FDSensor implements Runnable{
-	
-	public static int default_timeout = 30000;
+
+	// TODO
+	public static int default_timeout = 10000;
 	private static int timeoutInc = 10;
 	public static int pingtime = default_timeout - timeoutInc;
 	private static String msgSeparator = "::";
-	
+
 	Vector<String> output_;
-	Set<String> neighbors_;
+	ArrayList<String> neighbors_;
 	HashMap<String, Integer> timeouts_;
 	HashMap<String, Date> lastListen;
-	String name_;
+	String mySensorname_;
 	ServerProperties properties_;
-
+	String myMachineName_;
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
-	private String myMachineName;
-	
+
 	public FDSensor(ServerProperties properties) {
 		output_ = new Vector<String>();
-		myMachineName = properties.getMachineName();
-		
-		neighbors_ = properties.getTopology().getNeighbors(myMachineName);
+		mySensorname_ = properties.getServerName();
+		myMachineName_ = properties.getMachineName();
+		View myView = properties.getMyView();
+		neighbors_ = myView.getListOfServers();
+
+		// remove the current sensor itself from the view.
+		neighbors_.remove(properties.getServerName());
+
 		properties_ = properties;
-		
+
 		timers = new HashMap<String, Timer>();
 		output_ = new Vector<String>();
 		lastListen = new HashMap<String, Date>();
 		timeouts_ = new HashMap<String, Integer>();
-		
+
 		for (String neighbor : neighbors_) {
-			timeouts_.put(neighbor, default_timeout); // 10000 ms.
-		}
-		for (String neighbor : neighbors_) {
+			timeouts_.put(neighbor, default_timeout);
 			Timer timer = new Timer();
 			timer.schedule(new TimeoutCheck(neighbor), default_timeout);
 			timers.put(neighbor, timer);
 		}
 	}
+	
+	@Override
+	public void run() {
+		alivetimer.schedule(new AliveMsg(), pingtime);
+		new ListeningThread().start();
+	}
+
 
 	class TimeoutCheck extends TimerTask {
 
 		String machinename_;
-		
+
 		public TimeoutCheck(String machinename) {
 			this.machinename_ = machinename;
 		}
-		
+
 		public void run() {
 			if(!output_.contains(machinename_)) {
 				output_.add(machinename_);
@@ -67,7 +81,7 @@ public class FDSensor implements Runnable{
 			}
 		}
 	}
-	
+
 	public class ListeningThread extends Thread {
 		public void run() {
 			try {
@@ -83,9 +97,9 @@ public class FDSensor implements Runnable{
 							System.err.println("Invalid alive message:" + str);
 						}
 						clientSocket.close();
-						
+
 						lastListen.put(machinename, new Date());
-						
+
 						if(output_.contains(machinename)){
 							output_.remove(machinename);
 							timeouts_.put(machinename, timeouts_.get(machinename) + timeoutInc);
@@ -106,11 +120,17 @@ public class FDSensor implements Runnable{
 
 	public class AliveMsg extends TimerTask {
 		public void run() {
-			String msg = name_ + msgSeparator + "alive";
+			String msg = myMachineName_ + msgSeparator + "alive";
 			try {
 				for (String neighbor : neighbors_) {
 					System.out.println(neighbor);
-					// TODO send msg to each neighbor;
+					Location loc = properties_.getServerLocations().getLocationForNode(neighbor);
+					Socket socket = new Socket(loc.getIp(), loc.getPort());
+					OutputStream oStream = socket.getOutputStream();
+					BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(oStream));
+					writer.write(msg);
+					writer.flush();
+					writer.close();
 				}
 
 				alivetimer.schedule(new AliveMsg(), pingtime);
@@ -120,10 +140,10 @@ public class FDSensor implements Runnable{
 		}
 	}
 
-/*	public static void main(String[] args) {
+	/*	public static void main(String[] args) {
 		try {
 //			Thread.sleep(10);
-			
+
 			HashSet<String> neighbors = new HashSet<String>() ;
 			neighbors.add("02");neighbors.add("03");neighbors.add("04");
 			String myMachineName = "01"; 
@@ -134,12 +154,6 @@ public class FDSensor implements Runnable{
 			e.printStackTrace();
 		}
 	}
-*/
-	
-	@Override
-	public void run() {
-		alivetimer.schedule(new AliveMsg(), pingtime);
-		new ListeningThread().start();
-	}
+	 */
 
 }
