@@ -150,7 +150,7 @@ public class FDSensor implements Runnable{
 					try {
 						socket = new Socket(loc.getIp(), loc.getPort());
 					} catch (Exception e) {
-						System.out.println("Not able to send alive message to "+ neighbor + " (TCP timeout)");
+//						System.out.println("Not able to send alive message to "+ neighbor + " (TCP timeout)");
 						continue;
 					}
 					OutputStream oStream = socket.getOutputStream();

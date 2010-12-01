@@ -1,13 +1,7 @@
-#Each line in this file will indicate a directed link between services.
-#Just the groupId_ is used here to denote any service
-#00 denotes the Oracle's group
+#Each line in this file will indicate a directed link between machine.
+#Just the machineid is used here to denote any machine
 
 #All links mentioned here are interpreted as bidirectional
-# grp_1 grp_2
+# machine_1 machine_2
 
 M01 M02
-M01 M03
-M02 M03
-M03 M04
-M03 M05
-M04 M05
