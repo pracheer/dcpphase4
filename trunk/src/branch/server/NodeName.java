@@ -119,7 +119,7 @@ public class NodeName {
 	}
 	
 	public static String getMachineForServer(String server) {
-		return server.substring(3);
+		return server.split("_")[1];
 	}
 
 	public static String getFailureDetectionServer(
