@@ -94,7 +94,7 @@ public class FDSensor implements Runnable{
 			System.err.println(output_.toString());
 			netWrapper_.sendToServer(FDServer.sensorInitMsg+"\n", fdServer);
 		} catch (Exception e) {
-			System.err.println("Not able to send Init to FDServer");
+//			System.err.println("Not able to send Init to FDServer");
 			e.printStackTrace();
 		}
 	}
@@ -115,7 +115,7 @@ public class FDSensor implements Runnable{
 						}
 						clientSocket.close();
 
-						System.out.println(machinename + " :alive");
+//						System.out.println(machinename + " :alive");
 						lastListen.put(machinename, new Date());
 
 						if(output_.contains(machinename)){
