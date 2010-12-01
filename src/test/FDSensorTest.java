@@ -1,5 +1,8 @@
 package test;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,6 +10,8 @@ import java.util.Timer;
 
 import junit.framework.TestCase;
 import branch.server.FDSensor;
+import branch.server.MachineProperties;
+import branch.server.ServerProperties;
 
 public class FDSensorTest extends TestCase {
 	private static int default_timeout = 10000;
@@ -16,27 +21,59 @@ public class FDSensorTest extends TestCase {
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
 	FDSensor sensor;
-	private Set<String> neighbors;
-	private String myMachineName;
+	private ServerProperties properties_;
+	private MachineProperties machineProp_;
+	private File tempServerLocationFile_;
+	private File tempTopologyFile_;
+	private File tempServiceConfigFile_;
 	
 
 	public FDSensorTest() {
 	}
 
-	public FDSensorTest(String myMachineName, Set<String> neighbors) {
+/*	public FDSensorTest(String myMachineName, Set<String> neighbors) {
 		this.myMachineName = myMachineName;
 		this.neighbors = neighbors;
 	}
-	
+*/	
 	protected void setUp() throws Exception {
-		super.setUp();
+		createProperties();		
+
+		startSensor("R01_M01");
+		startSensor("R01_M02");
+		startSensor("R01_M03");
+		startSensor("R01_M04");
+	}
+
+	private void startSensor(String sensorName) {
+		String[] args = new String[8];
+		args[0] = "-id";
+		args[1] = sensorName;
+		args[2] = "-topology";
+		args[3] = tempTopologyFile_.getAbsolutePath();
+		args[4] = "-servers";
+		args[5] = tempServerLocationFile_.getAbsolutePath();
+		args[6] = "-config";
+		args[7] = tempServiceConfigFile_.getAbsolutePath();
 		
 		try {
-			neighbors = new HashSet<String>();
-			neighbors.add("02");neighbors.add("03");neighbors.add("04");
-			myMachineName = "01"; 
+			machineProp_ = new MachineProperties(args);
+		} catch (MachineProperties.PropertiesException e) {
+			System.err.println(e.getMessage());
+			fail("Flag parser exception for valid command line.");
+		}
+		
+		properties_ = new ServerProperties(
+				machineProp_.getTopology(),
+				machineProp_.getServerLocations(),
+				machineProp_.getServiceConfig(),
+				machineProp_.getMachineName(),
+				sensorName,
+				false);
+		
+		try {
 
-			sensor = new FDSensor(myMachineName, neighbors);
+			sensor = new FDSensor(properties_);
 			Thread sthread = new Thread(sensor);
 			sthread.start();
 			
@@ -45,37 +82,62 @@ public class FDSensorTest extends TestCase {
 		}
 	}
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-	
-	public final void testFDsens() {
-/*		try {
-			Socket destSocket = null;
-			String str;
-			
-			Thread.sleep(4000);
-			destSocket = new Socket("localhost", 10002);
-			PrintWriter out = new PrintWriter(destSocket.getOutputStream(), true);
-			str = "A"+ "::" + "ALIVE";
-			out.println(str);
-			out.close();
-			destSocket.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+	private void createProperties() throws IOException {
+		tempServerLocationFile_ = File.createTempFile("locations", ".txt");
+		String str;
+		
+		str = "";
+		str += "R01_M01 localhost 10001\n";
+		str += "F01_M01 localhost 10002\n";
+		str += "R01_M02 localhost 10003\n";
+		str += "F01_M02 localhost 10004\n";
+		str += "R01_M03 localhost 10005\n";
+		str += "F01_M03 localhost 10006\n";
+		str += "R01_M04 localhost 10007\n";
+		str += "F01_M04 localhost 10008\n";
+		try {
+			FileWriter fw = new FileWriter(tempServerLocationFile_);
+			fw.write(str.toCharArray());
+			fw.close();
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
 		}
+		
+		tempTopologyFile_ = File.createTempFile("topology", ".txt");
+		
+		str = "";
+		str += "M01 M02\n";
+		str += "M01 M03\n";
+		str += "M01 M04\n";
+		str += "M02 M03\n";
+		str += "M02 M04\n";
+		str += "M03 M04\n";
+
+		try {
+			FileWriter fw = new FileWriter(tempTopologyFile_);
+			fw.write(str.toCharArray());
+			fw.close();
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+		}
+		
+		tempServiceConfigFile_ = File.createTempFile("config", ".txt");
+		
+		str = "";
+		str += "F01:F01_M01 F01_M02 F01_M03 F01_M04\n";
+		try {
+			FileWriter fw = new FileWriter(tempServiceConfigFile_);
+			fw.write(str.toCharArray());
+			fw.close();
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+		}
+		
+		properties_ = null;
 	}
 
-	public final void testFDsensTopologyString() {
-		try {
-			Thread.sleep(default_timeout+5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		Vector<String> expected = new Vector<String>();
-		expected.add("B");
-		expected.add("C");
-		assertEquals(expected, sensor.getOutput()); */
+	protected void tearDown() throws Exception {
+		super.tearDown();
 	}
 
 }
