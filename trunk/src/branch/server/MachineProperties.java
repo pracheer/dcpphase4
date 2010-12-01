@@ -81,7 +81,7 @@ public class MachineProperties {
 			ServiceConfig sc, String machine) {
 		topology_ = tpl;
 		serverLocations_ = locs;
-		serviceConfig_ = sc;
+		serviceConfig_ = (ServiceConfig) sc.clone();
 		machine_ = machine;
 	}
 
