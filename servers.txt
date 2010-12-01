@@ -4,18 +4,19 @@
 #Node ip_address portnumber
 
 #Servers
-S01_01 localhost 12350
-S01_02 localhost 12351
-S01_03 localhost 12352
+01_M01 localhost 12350
+01_M02 localhost 12351
 
-S02_01 localhost 12360
-S02_02 localhost 12361
-S02_03 localhost 12362
+02_M02 localhost 12361
+02_M01 localhost 12362
+
+03_M03 localhost 12364
 
 #GUIs
 
 G01 localhost 12385
 G02 localhost 12386
+G03 localhost 12387
 
 #Oracle
 Oracle localhost 12396
