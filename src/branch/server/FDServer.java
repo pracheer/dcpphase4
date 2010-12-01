@@ -121,7 +121,13 @@ public class FDServer implements Runnable {
 						Message uvMsg = new Message(properties_.getServerName(), sm);
 						
 						netWrapper_.sendToServer(uvMsg.toString(), interestedServer);
+						
+						// Also send it to the GUI.
+						String guiServer = NodeName.getGuiForServer(interestedServer);
+						netWrapper_.sendToServer(uvMsg.toString(), guiServer);
 					}
+					
+					
 				}
 				prev_suspects_ = new_suspects;
 			} catch (Exception e) {
