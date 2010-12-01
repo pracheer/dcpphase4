@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +21,7 @@ import branch.server.NodeLocations.Location;
 
 public class FDServer implements Runnable {
 
-	private static int sleep_interval = 10000;
+	private static int sleep_interval = 3000;
 	private static String serverInitMsg = "INIT_FROM_SERVER";
 	public static String sensorInitMsg = "INIT_FROM_SENSOR";
 
@@ -29,7 +30,6 @@ public class FDServer implements Runnable {
 	private ArrayList<String> neighbors_;
 	private Semaphore listenSema_ = new Semaphore(0);
 	private Semaphore initSema_ = new Semaphore(0);
-	private Semaphore mutex = new Semaphore(0);
 	private boolean initFromServer_ = false;
 	private boolean initFromSensor_ = false;
 	private HashMap<String, Vector<String>> vp;
@@ -37,6 +37,7 @@ public class FDServer implements Runnable {
 	private ServerProperties properties_;
 	private NetworkWrapper netWrapper_;
 	private listenInit listener;
+	public int receivedCount_;
 	
 	public FDServer(ServerProperties properties, FDSensor sensor) {
 		vp = new HashMap<String, Vector<String>>();
@@ -69,15 +70,13 @@ public class FDServer implements Runnable {
 		while(true) {
 			try {
 				serverSocket_.setSoTimeout(0);
-				synchronized (initSema_) {
-					initSema_.wait();
-				}
+				initSema_.acquire();
 
 				if(initFromSensor_) {
 					// send server init msg to all FD servers
 					sendToNeighbors(serverInitMsg);
 				}
-				System.out.println(" Init sema woken up at ");
+				System.out.println(" Init sema woken up due to " + ((initFromSensor_)? "SENSOR": "SERVER"));
 				Vector<String> proposed_suspects = sensor_.getOutput();
 				vp.put(properties_.getMachineName(), proposed_suspects);
 
@@ -88,12 +87,19 @@ public class FDServer implements Runnable {
 
 				// TODO check the socket timeout.
 				serverSocket_.setSoTimeout(sleep_interval);
-				synchronized (initSema_) {
-					listenSema_.wait();
-				}
+				System.err.println("Setting timeout");
+				// Wait for others to reply to your broadcast
+				listenSema_.acquire();
+				
 				Vector<String> new_suspects = consensusProtocol();
+				
+				// TODO 
+				// Remove the sort and comments.
 				Collections.sort(new_suspects);
 				Collections.sort(prev_suspects_);
+				if (!prev_suspects_.equals(new_suspects))
+					System.err.println(" SUSPECTS CHANGED");
+				System.out.println("New suspects after consesus :" + new_suspects.toString());
 
 				getMachinesToChange(prev_suspects_, new_suspects, machinesToAdd, machinesToRemove);
 				
@@ -117,6 +123,7 @@ public class FDServer implements Runnable {
 						netWrapper_.sendToServer(uvMsg.toString(), interestedServer);
 					}
 				}
+				prev_suspects_ = new_suspects;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -201,7 +208,12 @@ public class FDServer implements Runnable {
 		try {
 			for (String neighbor : neighbors_) {
 				Location locationForNode = properties_.getServerLocations().getLocationForNode(neighbor);
-				Socket socket = new Socket(locationForNode.getIp(), locationForNode.getPort());
+				Socket socket;
+				try {
+					socket = new Socket(locationForNode.getIp(), locationForNode.getPort());
+				} catch (Exception e) {
+					continue;
+				}
 				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 				out.println(msg);
 			}
@@ -229,7 +241,7 @@ public class FDServer implements Runnable {
 				if(vector.contains(suspect))
 					count +=1;
 			}
-			if(count >= (machines.size()/2 + 1)) { // majority protocol
+			if(count >= (receivedCount_/2 + 1)) { // majority protocol
 				new_suspects.add(suspect);
 			}
 		}
@@ -240,7 +252,7 @@ public class FDServer implements Runnable {
 	class listenInit implements Runnable {
 		public void run() {
 			System.err.println("listentInit started");
-			int receivedCount = 0;
+			receivedCount_ = 0;
 			String str = "";
 			while(true) {
 				Socket clientSocket;
@@ -249,27 +261,39 @@ public class FDServer implements Runnable {
 					BufferedReader in = new BufferedReader(new InputStreamReader(
 							clientSocket.getInputStream()));
 					str = in.readLine();
+					clientSocket.close();
 				} catch (SocketTimeoutException  e) {
-					synchronized (initSema_) {
-						listenSema_.notify();
-					}
+						System.out.println(" Listen sema released");
+						try {
+							serverSocket_.setSoTimeout(0);
+						} catch (SocketException e2) {
+							e2.printStackTrace();
+						}
+						listenSema_.release();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 
 				if(str.equals(serverInitMsg) && !initFromServer_ && !initFromSensor_) {
 					initFromServer_ = true;
-					receivedCount = 0;
-					synchronized (initSema_) {
-						initSema_.notify();
+					try {
+						serverSocket_.setSoTimeout(sleep_interval);
+					} catch (SocketException e) {
+						e.printStackTrace();
 					}
+					receivedCount_ = 0;
+					initSema_.release();
 				}
 				else if (str.equals(sensorInitMsg) && !initFromSensor_ && !initFromServer_) {
 					initFromSensor_ = true;
-					receivedCount = 0;
-					synchronized (initSema_) {
-						initSema_.notify();
+					try {
+						serverSocket_.setSoTimeout(sleep_interval);
+					} catch (SocketException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
+					receivedCount_ = 0;
+					initSema_.release();
 				} else {
 					if(str.equals(serverInitMsg) || str.equals(sensorInitMsg))
 						continue;
@@ -278,11 +302,9 @@ public class FDServer implements Runnable {
 
 					vp.put(objsuspects.getNodeName(), objsuspects.getSuspects());
 
-					receivedCount += 1;
-					if (receivedCount == neighbors_.size()- 1) {
-						synchronized (initSema_) {
-							listenSema_.notify();
-						}
+					receivedCount_ += 1;
+					if (receivedCount_ == neighbors_.size()- 1) {
+							listenSema_.release();
 					}	
 				}
 			}

@@ -517,7 +517,7 @@ public class BranchGUI extends javax.swing.JFrame {
 			try {
 				toWakeUp_ = Thread.currentThread();
 				while (true) {
-					waitingTime_ *= 2000;
+					waitingTime_ *= 2;
 					
 					// Even if we fail to connect to the head, we keep on retrying.
 					// As it could be the case that head is the server that went down.

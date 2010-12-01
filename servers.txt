@@ -10,7 +10,7 @@
 02_M02 localhost 12361
 02_M01 localhost 12362
 
-#03_M03 localhost 12364
+03_M03 localhost 12364
 
 #04_M04 localhost 12371
 #04_M05 localhost 12373
@@ -21,7 +21,7 @@
 
 F01_M01 localhost 12391
 F01_M02 localhost 12392
-#F01_M03 localhost 12393
+F01_M03 localhost 12393
 
 #F02_M03 localhost 12394
 #F02_M04 localhost 12395
@@ -29,7 +29,7 @@ F01_M02 localhost 12392
 
 R01_M01 localhost 12491
 R01_M02 localhost 12492
-#R01_M03 localhost 12493
+R01_M03 localhost 12493
 
 #R02_M03 localhost 12494
 #R02_M04 localhost 12495
