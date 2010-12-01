@@ -104,18 +104,18 @@ public class FDServer implements Runnable {
 				
 				if (!prev_suspects_.equals(new_suspects))
 					System.err.println(" SUSPECTS CHANGED");
-				System.out.println("New suspects after consesus :" + new_suspects.toString());
+//				System.out.println("New suspects after consesus :" + new_suspects.toString());
 
-				System.out.println("Prev:");
-				System.out.println(prev_suspects_);
-				System.out.println("New:");
-				System.out.println(new_suspects);
+//				System.out.println("Prev:");
+//				System.out.println(prev_suspects_);
+//				System.out.println("New:");
+//				System.out.println(new_suspects);
 				getMachinesToChange(prev_suspects_, new_suspects, machinesToAdd, machinesToRemove);
 
-				System.out.println("ToAdd:");
-				System.out.println(machinesToAdd);
-				System.out.println("ToRem:");
-				System.out.println(machinesToRemove);
+//				System.out.println("ToAdd:");
+//				System.out.println(machinesToAdd);
+//				System.out.println("ToRem:");
+//				System.out.println(machinesToRemove);
 
 				Vector<View> viewsToUpdate = getViewsToUpdate(
 						machinesToAdd,
@@ -123,8 +123,8 @@ public class FDServer implements Runnable {
 						properties_.getServiceConfig(),
 						properties_.getServerLocations());
 
-				System.out.println("Views:");
-				System.out.println(viewsToUpdate);
+//				System.out.println("Views:");
+//				System.out.println(viewsToUpdate);
 
 				Vector<String> serversInMyMachine =
 					properties_.getServerLocations().getServersForMachine(properties_.getMachineName());
@@ -327,11 +327,9 @@ public class FDServer implements Runnable {
 					try {
 						serverSocket_.setSoTimeout(sleep_interval);
 					} catch (SocketException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					receivedCount_ = 0;
-//					initSema_.release();
 				} else {
 					if (str==null || str.equals(serverInitMsg)
 							|| str.equals(sensorInitMsg))
