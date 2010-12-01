@@ -94,7 +94,6 @@ public class ServerProperties extends MachineProperties {
 	}
 
 	public View getMyView() {
-		// DO NOT keep a local view_
 		// The updateView method should update the HashMap.
 		// And successive calls to getView() should automatically
 		// get the latest view for the current node.
@@ -109,33 +108,13 @@ public class ServerProperties extends MachineProperties {
 		
 		// Update the view.
 		super.getServiceConfig().updateView(view);
-
+		
 		// Update the state of the server if relevant.
-		if(service_.equalsIgnoreCase(view.getGroupId()) && !isGui_) {
-			String myNewSuccessor = view.getSuccessor(serverName_);
-			if(oldState == ServerState.TAIL) {
-				if(myNewSuccessor != null) {
-					if (view.getPredecessor(serverName_) != null) {
-						updateState(ServerProperties.ServerState.MIDDLE);
-					} else {
-						updateState(ServerProperties.ServerState.HEAD);
-					}
-				}
-			}
-			else {
-				if (myNewSuccessor == null) {
-					updateState(ServerProperties.ServerState.TAIL);
-				} else if (view.getPredecessor(serverName_) == null) {
-					updateState(ServerProperties.ServerState.HEAD);
-				} else {
-					updateState(ServerProperties.ServerState.MIDDLE);
-				}
-			}
-		}
+		computeAndUpdateState();
 	}
 	public void computeAndUpdateState() {
 		ServerState oldState = getState();
-		View view = super.getServiceConfig().getViews().get(service_);
+		View view = getMyView();
 			
 		// Update the state of the server if relevant.
 		if(service_.equalsIgnoreCase(view.getGroupId()) && !isGui_) {
