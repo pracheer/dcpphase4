@@ -52,6 +52,7 @@ public class AccDetails {
 		return accountDetails.get(acnt);
 	}
 
+	@SuppressWarnings("unchecked")
 	public synchronized HashMap<String,Double> getAllAccnts() {
 		return (HashMap<String, Double>)accountDetails.clone();
 	}

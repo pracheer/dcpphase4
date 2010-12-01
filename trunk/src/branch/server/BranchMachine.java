@@ -20,12 +20,12 @@ public class BranchMachine {
 
 		NodeLocations locs = machineProp_.getServerLocations();
 		Vector<String> servers = locs.getServersForMachine(machineProp_.getMachineName());
-
+		ServerProperties sp;
 		for (String server : servers) {
 			Type type = NodeName.getType(server);
 			switch(type) {
 			case BRANCHSERVER:
-				ServerProperties sp = new ServerProperties(
+				sp = new ServerProperties(
 						machineProp_.getTopology(),
 						machineProp_.getServerLocations(),
 						machineProp_.getServiceConfig(),
@@ -37,11 +37,27 @@ public class BranchMachine {
 				break;
 
 			case FAILUREDETECTIONSERVER:
-				Set<String> neighbors = machineProp_.getTopology().getNeighbors(machineProp_.getMachineName());
-				FDSensor sensor = new FDSensor(machineProp_.getMachineName(), neighbors);
+				
+				sp = new ServerProperties(
+						machineProp_.getTopology(),
+						machineProp_.getServerLocations(),
+						machineProp_.getServiceConfig(),
+						machineProp_.getMachineName(),
+						NodeName.getSensor(server),
+						false);
+				
+				FDSensor sensor = new FDSensor(sp);
 				Thread sthread = new Thread(sensor);
 				sthread.start();
 
+				sp = new ServerProperties(
+						machineProp_.getTopology(),
+						machineProp_.getServerLocations(),
+						machineProp_.getServiceConfig(),
+						machineProp_.getMachineName(),
+						server,
+						false);
+				
 				NodeLocations.Location loc = machineProp_.getServerLocations().getLocationForNode(server);
 				FDServer fdserver = new FDServer(machineProp_, sensor, loc.getPort());
 				Thread fdThread = new Thread(fdserver);

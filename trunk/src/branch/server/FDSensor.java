@@ -24,16 +24,18 @@ public class FDSensor implements Runnable{
 	HashMap<String, Integer> timeouts_;
 	HashMap<String, Date> lastListen;
 	String name_;
+	ServerProperties properties_;
 
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
 	private String myMachineName;
 	
-	public FDSensor(String machineName, Set<String> neighbors) {
+	public FDSensor(ServerProperties properties) {
 		output_ = new Vector<String>();
-		myMachineName = machineName;
+		myMachineName = properties.getMachineName();
 		
-		neighbors_ = neighbors;
+		neighbors_ = properties.getTopology().getNeighbors(myMachineName);
+		properties_ = properties;
 		
 		timers = new HashMap<String, Timer>();
 		output_ = new Vector<String>();
@@ -69,8 +71,7 @@ public class FDSensor implements Runnable{
 	public class ListeningThread extends Thread {
 		public void run() {
 			try {
-				// TODO
-				ServerSocket serverSocket = new ServerSocket(10002);
+				ServerSocket serverSocket = new ServerSocket(properties_.getPort());
 				while (true) {
 					Socket clientSocket = serverSocket.accept();
 					BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -119,7 +120,7 @@ public class FDSensor implements Runnable{
 		}
 	}
 
-	public static void main(String[] args) {
+/*	public static void main(String[] args) {
 		try {
 //			Thread.sleep(10);
 			
@@ -132,9 +133,9 @@ public class FDSensor implements Runnable{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
 	}
-
+*/
+	
 	@Override
 	public void run() {
 		alivetimer.schedule(new AliveMsg(), pingtime);

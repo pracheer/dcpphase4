@@ -112,5 +112,9 @@ public class NodeName {
 		}
 		return null;
 	}
+
+	public static String getSensor(String failureDetectionServer) {
+		return "R" + failureDetectionServer.substring(1);
+	}
 	
 }
