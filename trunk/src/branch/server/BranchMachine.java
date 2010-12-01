@@ -59,7 +59,7 @@ public class BranchMachine {
 						false);
 				
 				NodeLocations.Location loc = machineProp_.getServerLocations().getLocationForNode(server);
-				FDServer fdserver = new FDServer(machineProp_, sensor, loc.getPort());
+				FDServer fdserver = new FDServer(sp, sensor);
 				Thread fdThread = new Thread(fdserver);
 				fdThread.start();
 				break;
