@@ -1,48 +1,48 @@
 package test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
-import java.util.Vector;
 
-import branch.server.FDSensor;
-import branch.server.FDSensor.AliveMsg;
-import branch.server.FDSensor.ListeningThread;
 import junit.framework.TestCase;
+import branch.server.FDSensor;
 
-public class FDsensTest extends TestCase {
+public class FDSensorTest extends TestCase {
 	private static int default_timeout = 10000;
 	private static int timeoutInc = 10;
 	public static int pingtime = default_timeout - timeoutInc;
 	private static String msgSeparator = "::";
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
-	FDSensor sensor = new FDSensor();
+	FDSensor sensor;
+	private Set<String> neighbors;
+	private String myMachineName;
 	
 
-	public FDsensTest(String name) {
-		super(name);
+	public FDSensorTest() {
 	}
 
+	public FDSensorTest(String myMachineName, Set<String> neighbors) {
+		this.myMachineName = myMachineName;
+		this.neighbors = neighbors;
+	}
+	
 	protected void setUp() throws Exception {
 		super.setUp();
 		
 		try {
-			//alivetimer.schedule(sensor.new AliveMsg(), pingtime);
-			sensor.new ListeningThread().start();
-			System.out.println("main over");
+			neighbors = new HashSet<String>();
+			neighbors.add("02");neighbors.add("03");neighbors.add("04");
+			myMachineName = "01"; 
+
+			sensor = new FDSensor(myMachineName, neighbors);
+			Thread sthread = new Thread(sensor);
+			sthread.start();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		
 	}
 
 	protected void tearDown() throws Exception {

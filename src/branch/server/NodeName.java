@@ -12,6 +12,15 @@ import java.util.Vector;
  * 
  */
 public class NodeName {	
+	
+	enum Type {
+		GUI,
+		BRANCHSERVER,
+		BRANCHSERVICE,
+		FAILUREDETECTIONSERVER,
+		FAILUREDETECTIONSERVICE
+	};
+	
 	public static String getService(String node) {
 		if(NodeName.isGui(node))
 			return getServiceForGui(node);
@@ -52,6 +61,21 @@ public class NodeName {
 		return service.startsWith("F") && service.charAt(3)=='_';
 	}
 
+	public static Type getType(String nodeName) {
+		if(isGui(nodeName))
+			return Type.GUI;
+		if(isBranchServer(nodeName))
+			return Type.BRANCHSERVER;
+		if(isBranchService(nodeName))
+			return Type.BRANCHSERVICE;
+		if(isFailureDetectionServer(nodeName))
+			return Type.FAILUREDETECTIONSERVER;
+		if(isFailureDetectionService(nodeName))
+			return Type.FAILUREDETECTIONSERVICE;
+		
+		return null;
+	}
+	
 	public static String getFailureDetectionService(String failureDetServer) {
 		if(!failureDetServer.startsWith("F") || failureDetServer.charAt(3)!='_' || failureDetServer.length()!=7)
 			return null;
