@@ -13,7 +13,7 @@ import java.util.Vector;
  */
 public class NodeName {	
 	
-	enum Type {
+	public enum Type {
 		GUI,
 		BRANCHSERVER,
 		BRANCHSERVICE,
@@ -44,21 +44,21 @@ public class NodeName {
 	}
 	
 	public static boolean isBranchServer(String node) {
-		return node.startsWith("S") && node.matches("S\\d{2}_M\\d{2}");
+		return node.matches("\\d{2}_M\\d{2}");
 	}
 	
 	public static boolean isBranchService(String node) {
-		if(node.startsWith("S") && node.matches("S\\d{2}"))
+		if(node.matches("\\d{2}"))
 			return true;
 		return false;
 	}
 	
 	public static boolean isFailureDetectionServer(String server) {
-		return server.startsWith("F");
+		return server.startsWith("F") && server.charAt(3)=='_';
 	}
 
 	public static boolean isFailureDetectionService(String service) {
-		return service.startsWith("F") && service.charAt(3)=='_';
+		return service.startsWith("F") && service.length()==3;
 	}
 
 	public static Type getType(String nodeName) {
@@ -83,23 +83,23 @@ public class NodeName {
 	}
 	
 	public static String getGuiForService(String service) {
-		return "G" + service.substring(1,3);
+		return "G" + service.substring(0, 2);
 	}
 	
 	public static String getGuiForServer(String server) {
-		return "G" + server.substring(1,3);
+		return "G" + server.substring(0, 2);
 	}
 	
 	public static String getServiceForGui(String gui) {
-		return "S" + gui.substring(1);
+		return gui.substring(1);
 	}
 	
 	public static String getServiceForServer(String server) {
-		return server.substring(0,3);
+		return server.substring(0,2);
 	}
 	
 	public static String getMachineForServer(String server) {
-		return server.substring(4);
+		return server.substring(3);
 	}
 
 	public static String getFailureDetectionServer(
