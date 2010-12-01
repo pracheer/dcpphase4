@@ -8,11 +8,6 @@
 M01 M02
 M01 M03
 M02 M03
-#M03 M04
-#M03 M05
-#M04 M05
-
-#Oracle needs to connect with all services/groups
-M00 M01
-M00 M02
-M00 M03
+M03 M04
+M03 M05
+M04 M05
