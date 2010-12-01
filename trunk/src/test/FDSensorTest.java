@@ -3,6 +3,7 @@ package test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +28,8 @@ public class FDSensorTest extends TestCase {
 	private File tempTopologyFile_;
 	private File tempServiceConfigFile_;
 	private int fdServerPort;
-
+	ArrayList<Thread> sensors;
+	
 	public FDSensorTest() {
 	}
 
@@ -39,10 +41,12 @@ public class FDSensorTest extends TestCase {
 	protected void setUp() throws Exception {
 		createProperties();		
 
+		/*
 		startSensor("R01_M01");
 		startSensor("R01_M02");
 		startSensor("R01_M03");
 		startSensor("R01_M04");
+		*/
 	}
 
 	private void startSensor(String sensorName) {
@@ -76,6 +80,7 @@ public class FDSensorTest extends TestCase {
 			sensor = new FDSensor(properties_, fdServerPort);
 			Thread sthread = new Thread(sensor);
 			sthread.start();
+			sensors.add(sthread);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -139,5 +144,13 @@ public class FDSensorTest extends TestCase {
 	protected void tearDown() throws Exception {
 		super.tearDown();
 	}
-
+	
+	public void testSensons() {
+		/*
+		Thread thread = sensors.get(1);
+		thread.stop();
+		Thread.sleep(1000);
+		sensors.get(0).get
+		*/
+	}
 }
