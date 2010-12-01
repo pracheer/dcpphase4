@@ -95,7 +95,10 @@ public class Topology {
 	}
 
 	public boolean isServerReachable(String fromServer, String toServer) {
-		if (NodeName.isGui(fromServer) || NodeName.isGui(toServer)) {
+		if (NodeName.getType(fromServer) == NodeName.Type.FAILUREDETECTIONSERVER
+				&& NodeName.isGui(toServer)) {
+			return true;
+		} else if (NodeName.isGui(fromServer) || NodeName.isGui(toServer)) {
 			String fromService = NodeName.getService(fromServer);
 			String toService = NodeName.getService(toServer);
 			return fromService.equals(toService);

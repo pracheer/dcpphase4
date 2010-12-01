@@ -55,7 +55,7 @@ public class NetworkWrapper {
 		return send(msg, destNode);	
 	}
 	
-	public boolean send(String msg, String destServer) {
+	public synchronized boolean send(String msg, String destServer) {
 		if (!tpl_.isServerReachable(properties_.getServerName(), destServer)) {
 			System.err.println("Not reachable : " + destServer.toString());
 			return false;
@@ -80,10 +80,16 @@ public class NetworkWrapper {
 			PrintWriter out = new PrintWriter(destSocket.getOutputStream(), true);
 			out.println(msg);
 			out.close();
-			destSocket.close();
 			success = true;
 		} catch (IOException e) {
+			e.printStackTrace();
 			System.err.println(e.getMessage());
+		} finally {
+			try {
+				destSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 

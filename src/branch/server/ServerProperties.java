@@ -99,7 +99,7 @@ public class ServerProperties extends MachineProperties {
 		// get the latest view for the current node.
 		// Keeping a separate view_ will include extra state handling
 		// (as the cache will go dirty).
-		View myView = super.getServiceConfig().getView(service_);
+		View myView = getServiceConfig().getView(service_);
 		return myView;
 	}
 

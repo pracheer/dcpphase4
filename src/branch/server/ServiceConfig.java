@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 
 public class ServiceConfig {
@@ -18,7 +20,20 @@ public class ServiceConfig {
 
 	public ServiceConfig clone() {
 		ServiceConfig serviceConfig = new ServiceConfig(this.serviceConfigFile_);
-		serviceConfig.views_ = (HashMap<String, View>) this.views_.clone();
+		serviceConfig.views_ = new HashMap<String, View>();
+		Set<String> keys = views_.keySet();
+		for (String key : keys) {
+			View view = views_.get(key);
+			View viewNew = new View(view.groupId_);
+			ArrayList<String> oldServers = view.getListOfServers();
+			ArrayList<String> newServers = new ArrayList<String>();
+			for (String server : oldServers) {
+				newServers.add(server);
+			}
+			viewNew.listOfServers = newServers;
+			serviceConfig.views_.put(key, viewNew);
+		}
+		
 		return serviceConfig;
 	}
 

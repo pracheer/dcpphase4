@@ -19,9 +19,9 @@ import branch.server.NodeLocations.Location;
 public class FDSensor implements Runnable{
 
 	// TODO
-	public static int default_timeout = 10000;
-	private static int timeoutInc = 0;
-	public static int pingtime = default_timeout/2/* - timeoutInc*/;
+	public static int default_timeout = 560;
+	private static int timeoutInc = (int) (0.1 * default_timeout);
+	public static int pingtime = 500;
 	private static String msgSeparator = "::";
 
 	Vector<String> output_;
@@ -171,21 +171,4 @@ public class FDSensor implements Runnable{
 			}
 		}
 	}
-
-	/*	public static void main(String[] args) {
-		try {
-//			Thread.sleep(10);
-
-			HashSet<String> neighbors = new HashSet<String>() ;
-			neighbors.add("02");neighbors.add("03");neighbors.add("04");
-			String myMachineName = "01"; 
-			FDSensor fdsens = new FDSensor(myMachineName, neighbors);
-			Thread sthread = new Thread(fdsens);
-			sthread.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	 */
-
 }
