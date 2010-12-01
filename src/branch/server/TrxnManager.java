@@ -11,11 +11,13 @@ public class TrxnManager {
 	private AccDetails accounts_;
 	private ServerProperties properties_;
 	private NetworkWrapper netWrapper_;
-
-	public TrxnManager(AccDetails accounts, NetworkWrapper nw) {
+	private TransactionLog transactionLog_;
+	
+	public TrxnManager(AccDetails accounts, NetworkWrapper nw, TransactionLog transactionLog) {
 		accounts_ = accounts;
 		netWrapper_ = nw;
 		properties_ = netWrapper_.getServerProperties();
+		transactionLog_ = transactionLog;
 	}
 
 	public TrxnResponse processTransaction(Trxn trxn) {
@@ -27,9 +29,9 @@ public class TrxnManager {
 		switch (trxn.getType()) {
 		case DEPOSIT:
 
-			if (!TransactionLog.containsTrxn(trxn.getSerialNum())) {
+			if (!transactionLog_.containsTrxn(trxn.getSerialNum())) {
 				accounts_.deposit(trxn.getSourceAccount(), trxn.getAmount());
-				TransactionLog.addTrxn(trxn);
+				transactionLog_.addTrxn(trxn);
 			}
 			balance = accounts_.query(trxn.getSourceAccount());
 			trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
@@ -37,9 +39,9 @@ public class TrxnManager {
 
 		case WITHDRAW:
 
-			if (!TransactionLog.containsTrxn(serial_Num)) {
+			if (!transactionLog_.containsTrxn(serial_Num)) {
 				accounts_.withdraw(trxn.getSourceAccount(), trxn.getAmount());
-				TransactionLog.addTrxn(trxn);
+				transactionLog_.addTrxn(trxn);
 			}
 			balance = accounts_.query(trxn.getSourceAccount());
 			trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
@@ -71,9 +73,9 @@ public class TrxnManager {
 		TrxnResponse trxnResponse;
 		Double balance;
 		// handle transfer at destination
-		if (!TransactionLog.containsTrxn(trxn.getSerialNum())) {
+		if (!transactionLog_.containsTrxn(trxn.getSerialNum())) {
 			accounts_.deposit(trxn.getDestAccount(), trxn.getAmount());
-			TransactionLog.addTrxn(trxn);
+			transactionLog_.addTrxn(trxn);
 		}
 		balance = accounts_.query(trxn.getDestAccount());
 		trxnResponse = new TrxnResponse(trxn.getSerialNum(), TrxnResponse.Type.TRANSACTION, balance, false, "");
@@ -97,16 +99,16 @@ public class TrxnManager {
 			}
 		}
 		// Local Withdraw 
-		if (!TransactionLog.containsTrxn(trxn.getSerialNum())) {
+		if (!transactionLog_.containsTrxn(trxn.getSerialNum())) {
 			balance = accounts_.withdraw(trxn.getSourceAccount(), trxn.getAmount());
 			if (trxn.getSourceBranch().equalsIgnoreCase(trxn.getDestBranch())) {
 				//Local Deposit
 				accounts_.deposit(trxn.getDestAccount(), trxn.getAmount());
 			}
-			TransactionLog.addTrxn(trxn);
+			transactionLog_.addTrxn(trxn);
 		}
 		else {
-			trxn = TransactionLog.getTrxn(trxn.getSerialNum());
+			trxn = transactionLog_.getTrxn(trxn.getSerialNum());
 			balance = accounts_.query(trxn.getSourceAccount());
 		}
 

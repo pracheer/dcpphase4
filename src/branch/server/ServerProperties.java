@@ -43,6 +43,7 @@ public class ServerProperties extends MachineProperties {
 		serverName_ = serverName;
 		service_ = NodeName.getService(serverName);
 		computeAndUpdateState();
+		System.out.println(serverName_ + " is " + serverState_);
 		// TODO: set sleep to 0 for now. Get it from the config instead.
 		sleep_ = 0;
 	}	

@@ -16,14 +16,16 @@ public class MsgProcessingThread extends Thread {
 	ServerProperties properties_;
 	TrxnManager tm_;
 	NetworkWrapper netWrapper_;
-
+	TransactionLog transactionLog_;
+	
 	public MsgProcessingThread(MsgQueue messages, ServerProperties properties) {
 		messages_ = messages;
 		properties_ = properties;
 		pmessages_ = new PendingMessageQueue();
 		accounts_ = new AccDetails();
 		netWrapper_ = new NetworkWrapper(properties);
-		tm_ = new TrxnManager(accounts_, netWrapper_);
+		transactionLog_ = new TransactionLog();
+		tm_ = new TrxnManager(accounts_, netWrapper_, transactionLog_);
 	}
 
 	public void run() {
@@ -79,7 +81,7 @@ public class MsgProcessingThread extends Thread {
 	
 	private void processSyncMessage(Sync sync) {
 		accounts_.synchronizeAccounts(sync);
-		TransactionLog.synchronizeTransactionLog(sync);		
+		transactionLog_.synchronizeTransactionLog(sync);		
 	}
 	
 	private void processViewMessage(View view) {
@@ -100,7 +102,7 @@ public class MsgProcessingThread extends Thread {
 					// Send a SYNC message to the new tail.
 					Sync sync = new Sync(
 							accounts_.getAllAccnts(),
-							TransactionLog.getAllTransactions());
+							transactionLog_.getAllTransactions());
 					Message msg = new Message(myNode, new SpecialMsg(sync));
 					netWrapper_.sendToServer(msg.toString(), myNewSuccessor);
 					System.out.println("Sending a sync message to " + myNewSuccessor);
