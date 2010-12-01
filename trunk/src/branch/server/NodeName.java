@@ -134,5 +134,9 @@ public class NodeName {
 	public static String getSensor(String failureDetectionServer) {
 		return "R" + failureDetectionServer.substring(1);
 	}
+
+	public static String getFailureDetectionServer(String sensorName) {
+		return "F" + sensorName.substring(1);
+	}
 	
 }

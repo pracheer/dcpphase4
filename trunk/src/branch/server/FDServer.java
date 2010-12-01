@@ -22,7 +22,7 @@ public class FDServer implements Runnable {
 
 	private static int sleep_interval = 10000;
 	private static String serverInitMsg = "INIT_FROM_SERVER";
-	private static String sensorInitMsg = "INIT_FROM_SENSOR";
+	public static String sensorInitMsg = "INIT_FROM_SENSOR";
 
 	private FDSensor sensor_;
 	private Vector<String> prev_suspects_;
@@ -73,7 +73,7 @@ public class FDServer implements Runnable {
 					// send server init msg to all FD servers
 					sendToNeighbors(serverInitMsg);
 				}
-
+				System.out.println(" Init sema woken up at ");
 				Vector<String> proposed_suspects = sensor_.getOutput();
 				vp.put(properties_.getMachineName(), proposed_suspects);
 
@@ -234,6 +234,7 @@ public class FDServer implements Runnable {
 	class listenInit implements Runnable {
 
 		public void run() {
+			System.err.println("listentInit started");
 			int receivedCount = 0;
 			String str = "";
 			while(true) {

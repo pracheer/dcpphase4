@@ -38,7 +38,7 @@ public class BranchMachine {
 
 			case FAILUREDETECTIONSERVER:
 				
-				sp = new ServerProperties(
+				ServerProperties spSensor = new ServerProperties(
 						machineProp_.getTopology(),
 						machineProp_.getServerLocations(),
 						machineProp_.getServiceConfig(),
@@ -46,11 +46,7 @@ public class BranchMachine {
 						NodeName.getSensor(server),
 						false);
 				
-				FDSensor sensor = new FDSensor(sp);
-				Thread sthread = new Thread(sensor);
-				sthread.start();
-
-				sp = new ServerProperties(
+				ServerProperties spFDServer = new ServerProperties(
 						machineProp_.getTopology(),
 						machineProp_.getServerLocations(),
 						machineProp_.getServiceConfig(),
@@ -58,8 +54,11 @@ public class BranchMachine {
 						server,
 						false);
 				
-				NodeLocations.Location loc = machineProp_.getServerLocations().getLocationForNode(server);
-				FDServer fdserver = new FDServer(sp, sensor);
+				FDSensor sensor = new FDSensor(spSensor, spFDServer.getPort());
+				Thread sthread = new Thread(sensor);
+				sthread.start();
+
+				FDServer fdserver = new FDServer(spFDServer, sensor);
 				Thread fdThread = new Thread(fdserver);
 				fdThread.start();
 				break;

@@ -26,7 +26,7 @@ public class FDSensorTest extends TestCase {
 	private File tempServerLocationFile_;
 	private File tempTopologyFile_;
 	private File tempServiceConfigFile_;
-	
+	private int fdServerPort;
 
 	public FDSensorTest() {
 	}
@@ -73,7 +73,7 @@ public class FDSensorTest extends TestCase {
 		
 		try {
 
-			sensor = new FDSensor(properties_);
+			sensor = new FDSensor(properties_, fdServerPort);
 			Thread sthread = new Thread(sensor);
 			sthread.start();
 			

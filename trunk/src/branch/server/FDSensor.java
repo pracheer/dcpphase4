@@ -20,7 +20,7 @@ public class FDSensor implements Runnable{
 
 	// TODO
 	public static int default_timeout = 10000;
-	private static int timeoutInc = 10;
+	private static int timeoutInc = 0;
 	public static int pingtime = default_timeout/2/* - timeoutInc*/;
 	private static String msgSeparator = "::";
 
@@ -33,8 +33,10 @@ public class FDSensor implements Runnable{
 	String myMachineName_;
 	static Timer alivetimer = new Timer();
 	HashMap<String, Timer> timers;
+	int fdServerPort_;
+	NetworkWrapper netWrapper_;
 
-	public FDSensor(ServerProperties properties) {
+	public FDSensor(ServerProperties properties, int fdServerPort) {
 		output_ = new Vector<String>();
 		mySensorname_ = properties.getServerName();
 		myMachineName_ = properties.getMachineName();
@@ -45,6 +47,7 @@ public class FDSensor implements Runnable{
 		neighbors_.remove(properties.getServerName());
 
 		properties_ = properties;
+		netWrapper_ = new NetworkWrapper(properties);
 
 		timers = new HashMap<String, Timer>();
 		output_ = new Vector<String>();
@@ -59,7 +62,7 @@ public class FDSensor implements Runnable{
 			timers.put(neighborMachine, timer);
 		}
 	}
-	
+
 	@Override
 	public void run() {
 		alivetimer.schedule(new AliveMsg(), pingtime);
@@ -79,10 +82,23 @@ public class FDSensor implements Runnable{
 			if(!output_.contains(machinename_)) {
 				output_.add(machinename_);
 				System.out.println("timeout for machine:" + machinename_);
+				notifyFDServer();
 			}
 		}
+
 	}
 
+	private void notifyFDServer() {
+		try {
+			String fdServer = NodeName.getFailureDetectionServer(mySensorname_);
+			System.err.println(output_.toString());
+			netWrapper_.sendToServer(FDServer.sensorInitMsg+"\n", fdServer);
+		} catch (Exception e) {
+			System.err.println("Not able to send Init to FDServer");
+			e.printStackTrace();
+		}
+	}
+	
 	public class ListeningThread extends Thread {
 		public void run() {
 			try {
@@ -99,14 +115,20 @@ public class FDSensor implements Runnable{
 						}
 						clientSocket.close();
 
+						System.out.println(machinename + " :alive");
 						lastListen.put(machinename, new Date());
 
 						if(output_.contains(machinename)){
 							output_.remove(machinename);
 							timeouts_.put(machinename, timeouts_.get(machinename) + timeoutInc);
+							notifyFDServer();
 						}
+
 						Timer timer = timers.get(machinename);
+						timer.cancel();
+						timer = new Timer();
 						timer.schedule(new TimeoutCheck(machinename), timeouts_.get(machinename));
+						timers.put(machinename, timer);
 					}
 				}
 			} catch (Exception e) {
@@ -124,13 +146,12 @@ public class FDSensor implements Runnable{
 			String msg = myMachineName_ + msgSeparator + "alive";
 			try {
 				for (String neighbor : neighbors_) {
-					System.out.println(neighbor);
 					Location loc = properties_.getServerLocations().getLocationForNode(neighbor);
 					Socket socket;
 					try {
 						socket = new Socket(loc.getIp(), loc.getPort());
 					} catch (Exception e) {
-						System.err.println(neighbor + " is not reachable.");
+						System.out.println("Not able to send alive message to "+ neighbor + " (TCP timeout)");
 						continue;
 					}
 					OutputStream oStream = socket.getOutputStream();
@@ -140,10 +161,10 @@ public class FDSensor implements Runnable{
 					writer.close();
 				}
 
-				if (mySensorname_.equals("R02_M04")) {
+				/*				if (mySensorname_.equals("R02_M04")) {
 					Thread.sleep(90000);
 				}
-				
+				 */				
 				alivetimer.schedule(new AliveMsg(), pingtime);
 			} catch (Exception e) {
 				e.printStackTrace();
