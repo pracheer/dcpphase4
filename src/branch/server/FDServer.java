@@ -36,7 +36,8 @@ public class FDServer implements Runnable {
 	private ServerSocket serverSocket_;
 	private ServerProperties properties_;
 	private NetworkWrapper netWrapper_;
-
+	private listenInit listener;
+	
 	public FDServer(ServerProperties properties, FDSensor sensor) {
 		vp = new HashMap<String, Vector<String>>();
 		properties_ = properties;
@@ -55,6 +56,9 @@ public class FDServer implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		listener = new listenInit();
+		Thread listenerThread = new Thread(listener);
+		listenerThread.start();
 	}
 
 	public void run() {
