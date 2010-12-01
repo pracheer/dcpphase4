@@ -12,17 +12,19 @@ How to Install:
 	CONFIG.TXT
 	JAR (BANK.JAR)
 	
-server.txt contains ipaddress of each server and each GUI
-config.txt contains the intial configuration of the branch services as well the FD service.
+server.txt contains ip-address of each server and each GUI
+config.txt contains the initial configuration of the branch services as well as the FD service.
 
 4. Click the LAUNCH.CMD file. Clicking on LAUNCH.CMD will start % JVM's (2 services each with 3 servers) and 2 corresponding GUIs. They will use the topology specified in TOPOLOGY_FILE.TXT (specifying bidirectional links) and SERVERS.TXT.
 
 
 5. Naming Convention:
 	a. groups/services are named as "01", "02" and so on
-	b. Gui is named as G01 if it belongs to group 01
-	c. server name is of format aa_Mbb. Here aa is the group name that server belongs to and Mbb 		indicates the JVM(processor) that it belogns to. So, S01_M01 is server which belongs to 		branch service 01
-	d. The ordering of servers is called a View and ordering is not based on server names. View 		is used to implement ordedring. First element in the view is the Head of the chain, last 		element of view the Tail of the chain. This view is only internally maintained in the 		servers.
+	b. Gui is named as G01 if it belongs to Group/Service:01
+	c. server name is of format aa_Mbb. Here aa is the group name that server belongs to and Mbb indicates the JVM(processor) that it belogns to.
+		So, 01_M01 is server which belongs to branch service 01 and runs in machine (JVM) M01 
+	d. The ordering of servers is called a View and ordering is not based on server names.
+		View is used to implement ordering. First element in the view is the Head of the chain, last element of view the Tail of the chain. This view is only internally maintained in the servers.
 
 
 6. To use the Server GUI:
@@ -32,7 +34,7 @@ The user can edit the serial number text field with the old serial number to re-
 Note: if an old serial number is used, details in other fields are ignored.
 
 
-Authors of Phase 1:
+Authors of Phase 3:
 Nikhil Kejriwal nk395
 Pracheer Gupta pg298
 Quazi Hussain qsh2
