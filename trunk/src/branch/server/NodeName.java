@@ -18,15 +18,39 @@ public class NodeName {
 		BRANCHSERVER,
 		BRANCHSERVICE,
 		FAILUREDETECTIONSERVER,
-		FAILUREDETECTIONSERVICE
+		FAILUREDETECTIONSERVICE, 
+		SENSOR
 	};
 	
 	public static String getService(String node) {
+		Type type = getType(node);
+		switch (type) {
+		case GUI:
+			return getServiceForGui(node);
+		case BRANCHSERVER:
+			return getServiceForServer(node);
+		case BRANCHSERVICE:
+			return node;
+		case FAILUREDETECTIONSERVER:
+			return getFailureDetectionService(node);
+		case FAILUREDETECTIONSERVICE:
+			return node;
+		case SENSOR:
+			return getServiceForServer(node);
+
+		default:
+			break;
+		}
 		if(NodeName.isGui(node))
 			return getServiceForGui(node);
 		else if(NodeName.isBranchServer(node))
 			return getServiceForServer(node);
-		return node;
+		else if(NodeName.isSensor(node))
+			return getServiceForServer(node);
+		else if(NodeName.isFailureDetectionServer(node))
+			return getFailureDetectionService(node);
+		
+		return null;
 	}
 	
 	public static String getGui(String node) {
@@ -70,6 +94,8 @@ public class NodeName {
 			return Type.BRANCHSERVER;
 		if(isBranchService(nodeName))
 			return Type.BRANCHSERVICE;
+		if(isSensor(nodeName))
+			return Type.SENSOR;
 		if(isFailureDetectionServer(nodeName))
 			return Type.FAILUREDETECTIONSERVER;
 		if(isFailureDetectionService(nodeName))
@@ -78,6 +104,10 @@ public class NodeName {
 		return null;
 	}
 	
+	private static boolean isSensor(String nodeName) {
+		return nodeName.startsWith("R") && nodeName.charAt(3)=='_';
+	}
+
 	public static String getFailureDetectionService(String failureDetServer) {
 		if(!failureDetServer.startsWith("F") || failureDetServer.charAt(3)!='_' || failureDetServer.length()!=7)
 			return null;
@@ -97,7 +127,7 @@ public class NodeName {
 	}
 	
 	public static String getServiceForServer(String server) {
-		return server.substring(0,2);
+		return server.split("_")[0];
 	}
 	
 	public static String getMachineForServer(String server) {
