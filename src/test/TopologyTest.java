@@ -56,25 +56,25 @@ public class TopologyTest extends TestCase {
 	
 	public void testIsServerReachable() {
 		Topology tpl = createTopologyFile(tempFile_.getAbsolutePath());
-		assertTrue(tpl.isServerReachable("S01_M01", "S01_M01"));
-		assertTrue(tpl.isServerReachable("S01_M02", "S02_M02"));
-		assertTrue(tpl.isServerReachable("S01_M01", "S01_M02"));
-		assertTrue(tpl.isServerReachable("S02_M02", "S02_M01"));
-		assertTrue(tpl.isServerReachable("S01_M01", "S02_M02"));
-		assertTrue(tpl.isServerReachable("S02_M02", "S01_M01"));
-		assertTrue(tpl.isServerReachable("S03_M01", "S11_M05"));
-		assertTrue(tpl.isServerReachable("S12_M05", "S10_M01"));
-		assertFalse(tpl.isServerReachable("S01_M02", "S01_M05"));
-		assertFalse(tpl.isServerReachable("S01_M02", "S02_M05"));
-		assertFalse(tpl.isServerReachable("S03_M02", "S11_M05"));
+		assertTrue(tpl.isServerReachable("01_M01", "01_M01"));
+		assertTrue(tpl.isServerReachable("01_M02", "02_M02"));
+		assertTrue(tpl.isServerReachable("01_M01", "01_M02"));
+		assertTrue(tpl.isServerReachable("02_M02", "02_M01"));
+		assertTrue(tpl.isServerReachable("01_M01", "02_M02"));
+		assertTrue(tpl.isServerReachable("02_M02", "01_M01"));
+		assertTrue(tpl.isServerReachable("03_M01", "11_M05"));
+		assertTrue(tpl.isServerReachable("12_M05", "10_M01"));
+		assertFalse(tpl.isServerReachable("01_M02", "01_M05"));
+		assertFalse(tpl.isServerReachable("01_M02", "02_M05"));
+		assertFalse(tpl.isServerReachable("03_M02", "11_M05"));
 		
 		// GUI specific.
-		assertTrue(tpl.isServerReachable("S01_M11", "G01"));
-		assertTrue(tpl.isServerReachable("S02_M05", "G02"));
-		assertTrue(tpl.isServerReachable("G02", "S02_M05"));
+		assertTrue(tpl.isServerReachable("01_M11", "G01"));
+		assertTrue(tpl.isServerReachable("02_M05", "G02"));
+		assertTrue(tpl.isServerReachable("G02", "02_M05"));
 		assertFalse(tpl.isServerReachable("G02", "G01"));
-		assertFalse(tpl.isServerReachable("G01", "S02_M01"));
-		assertFalse(tpl.isServerReachable("G02", "S01_M05"));
+		assertFalse(tpl.isServerReachable("G01", "02_M01"));
+		assertFalse(tpl.isServerReachable("G02", "01_M05"));
 	}
 	
 	public void testTopologyCreation() {

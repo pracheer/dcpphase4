@@ -13,6 +13,7 @@ import branch.server.View;
 import junit.framework.TestCase;
 
 public class FDServerTest extends TestCase {
+	/*
 	public void testMachinesToChange() {
 		Vector<String> prvs = new Vector<String>(), news = new Vector<String>();
 		Vector<String> toadd = new Vector<String>(), torem = new Vector<String>();
@@ -38,7 +39,7 @@ public class FDServerTest extends TestCase {
 		assertEquals("M08", torem.get(1));
 		assertEquals("M01", torem.get(2));
 	}
-	
+	*/
 	
 	public void testViewsToUpdate() {
 		Vector<String> toAdd = new Vector<String>();
@@ -76,6 +77,11 @@ public class FDServerTest extends TestCase {
 		v5.addServer("05_M05");
 		sc.updateView(v5);
 		
+		View v6 = new View("F05");
+		v6.addServer("F05_M01");
+		v6.addServer("F05_M05");
+		sc.updateView(v6);
+		
 		
 		File tempFile = null;
 		String str = "";
@@ -94,9 +100,11 @@ public class FDServerTest extends TestCase {
 		str += "05_M03 localhost 10013\n";
 		str += "05_M04 localhost 10014\n";
 		str += "05_M05 localhost 10015\n";		
-		str += "F05_M05 localhost 10016\n";
-		str += "F06_M05 localhost 10016\n";
-		str += "F07_M05 localhost 10016\n";
+		str += "F05_M01 localhost 10016\n";
+		str += "F05_M02 localhost 10017\n";
+		str += "F05_M03 localhost 10018\n";
+		str += "F05_M04 localhost 10019\n";
+		str += "F05_M05 localhost 10020\n";
 		try {
 			tempFile = File.createTempFile("locations", ".txt");
 			FileWriter fw = new FileWriter(tempFile);
@@ -119,5 +127,6 @@ public class FDServerTest extends TestCase {
 		assertEquals("05::05_M01::05_M04::05_M02::05_M03", views.get(0).toString());
 		assertEquals("03::03_M04::03_M02::03_M03", views.get(1).toString());
 		assertEquals("02::02_M01::02_M03::02_M02", views.get(2).toString());
+		assertEquals("F05::F05_M01::F05_M02::F05_M03", v6.toString());
 	}
 }
