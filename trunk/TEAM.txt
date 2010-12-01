@@ -5,30 +5,30 @@ Pracheer Gupta (pg298)
 Nikhil Kejriwal (nk395)
 
 
-Brainstorming to create specifications and protocols to implement a reliable and highly available service through chain replication method. (12 hours).
+Brainstorming to create specifications and protocols to implementing a state machine replicated failure detection service. Considerable time was spent doing figuring out ways to correct phase-3 implementation. (12 hours).
 
 Nikhil:  15 - 20 hours
 Brainstorming
-Implemented the Oracle
-View Generation
+Implemented the FD server
+Configuration Management
 parsing different kinds of messages
 Test Plan Generation
-Code Refactoring
+Code Refactoring and phase 3 rectification
 
 Quazi:  15 - 20 hours
 Brainstorming
-View Updation
+Configuration Management
 Changing network wrappers to implement send functions keeping the topology in mind
-Changing server code to implement Head/Tail/Middle functionality
+Changing server code to handle itermittent failures.
 Unit Tests
-Code Refactoring
+Code Refactoring  and phase 3 rectification
 
 
 Pracheer: 15 - 20 hours
 Brainstorming
-View Generation
+Configuration Management
 creating different kinds of messages
 changed the topoplogy to represent services instead of servers
 Managing accounts, updating history and syncing between servers
 Test Plan Generation
-Code Refactoring
+Code Refactoring  and phase 3 rectification
