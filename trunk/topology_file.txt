@@ -5,8 +5,14 @@
 #All links mentioned here are interpreted as bidirectional
 # grp_1 grp_2
 
-01 02
+M01 M02
+M01 M03
+M02 M03
+#M03 M04
+#M03 M05
+#M04 M05
 
 #Oracle needs to connect with all services/groups
-00 01
-00 02
+M00 M01
+M00 M02
+M00 M03
