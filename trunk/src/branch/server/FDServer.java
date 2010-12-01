@@ -35,17 +35,21 @@ public class FDServer implements Runnable {
 	private HashMap<String, Vector<String>> vp;
 	private ServerSocket serverSocket_;
 	private ServerProperties properties_;
+	private NetworkWrapper netWrapper_;
 
 	public FDServer(ServerProperties properties, FDSensor sensor) {
 		vp = new HashMap<String, Vector<String>>();
 		properties_ = properties;
 
+		netWrapper_ = new NetworkWrapper(properties);
+		
 		// Get the neighborlist. Remove myself from the list.
 		neighbors_ = properties.getMyView().getListOfServers();
 		neighbors_.remove(properties_.getServerName());
 
 		sensor_ = sensor;
 		prev_suspects_ = new Vector<String>();
+		
 		try {
 			serverSocket_ = new ServerSocket(properties.getPort());
 		} catch (IOException e) {
@@ -53,26 +57,11 @@ public class FDServer implements Runnable {
 		}
 	}
 
-	/*
-	public FDServer(String fdservername, FDSensor sensor, int port) {
-		vp = new HashMap<String, Vector<String>>();
-//		this.properties = properties;
-//		myMachineName = this.properties.getMachineName();
-
-		myServerName = fdservername;
-
-		neighbors = new HashSet<String>();
-		neighbors.add("A");neighbors.add("B");neighbors.add("C");
-		this.sensor_ = sensor;
-		prev_suspects = new Vector<String>();
-		try {
-			serverSocket = new ServerSocket(port);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	 */
 	public void run() {
+		Vector<String> machinesToAdd = new Vector<String>();
+		Vector<String> machinesToRemove = new Vector<String>();
+		
+		
 		while(true) {
 			try {
 				serverSocket_.setSoTimeout(0);
@@ -101,41 +90,105 @@ public class FDServer implements Runnable {
 				Vector<String> new_suspects = consensusProtocol();
 				Collections.sort(new_suspects);
 				Collections.sort(prev_suspects_);
-				if(!new_suspects.equals(prev_suspects_)) {
-					System.out.print("new suspected list is - ");
-					for (String new_suspect : new_suspects) {
-						System.out.print(new_suspect + ",");
+				
+				machinesToAdd.clear();
+				machinesToRemove.clear();
+				
+				getMachinesToChange(prev_suspects_, new_suspects, machinesToAdd, machinesToRemove);
+				
+				Vector<View> viewsToUpdate = getViewsToUpdate(machinesToAdd, machinesToRemove);
+				Vector<String> serversInMyMachine =
+					properties_.getServerLocations().getServersForMachine(properties_.getMachineName());
+				for (View v : viewsToUpdate) {
+					for (String interestedServer : serversInMyMachine) {
+						if (NodeName.getType(interestedServer) != NodeName.Type.BRANCHSERVER) {
+							continue;
+						}
+						
+						SpecialMsg sm = new SpecialMsg(v);
+						Message uvMsg = new Message(properties_.getServerName(), sm);
+						
+						netWrapper_.sendToServer(uvMsg.toString(), interestedServer);
 					}
-					System.out.println("");
-
-
-					// Addition of machine. (Just a dumb check).
-					// TODO
-					String machine = "";
-					if (new_suspects.size() == 1) {
-						updateForMachineAddition(machine);
-					} else {
-						updateForMachineDeletion(machine);
-					}
-
-					// update views
-					//TODO need to send the new suspects to all the branch servers running on this machine.
-					initFromSensor_ = false;
-					initFromServer_ = false;
 				}
-
 			} catch (Exception e) {
 				e.printStackTrace();
+			}
+			
+			initFromSensor_ = false;
+			initFromServer_ = false;
+		}
+	}
+	
+	public static void getMachinesToChange(
+			Vector<String> prvSuspects,
+			Vector<String> newSuspects,
+			Vector<String> machinesToAdd,
+			Vector<String> machinesToRemove) {
+		machinesToAdd.clear();
+		machinesToRemove.clear();
+		
+		
+		for (String newS : newSuspects) {
+			if (!prvSuspects.contains(newS)) {
+				machinesToAdd.add(newS);
+			}
+		}
+		
+		for (String prvS : prvSuspects) {
+			if (!newSuspects.contains(prvS)) {
+				machinesToRemove.add(prvS);
 			}
 		}
 	}
 
-	private void updateForMachineAddition(String machine) {
+	
+	public Vector<View> getViewsToUpdate(
+			Vector<String> toAdd,
+			Vector<String> toRem) {
+		HashSet<String> updatedViews = new HashSet<String>();
+		Vector<View> viewsToUpdate = new Vector<View>();
+		
+		for (String addedMachine : toAdd) {
+			Vector<String> serversInMachine =
+				properties_.getServerLocations().getServersForMachine(addedMachine);
 
-	}
+			for (String affectedServer : serversInMachine) {
+				if (NodeName.getType(affectedServer) != NodeName.Type.BRANCHSERVER) {
+					continue;
+				}
 
-	private void updateForMachineDeletion(String machine) {
+				String affectedService = NodeName.getService(affectedServer);			
+				View v = properties_.getServiceConfig().getView(affectedService);
+				v.addServer(affectedServer);
+				
+				if (!updatedViews.contains(v.getGroupId())) {
+					viewsToUpdate.add(v);
+				}
+			}
+		}
+		
+		
+		for (String removedMachine : toRem) {
+			Vector<String> serversInMachine =
+				properties_.getServerLocations().getServersForMachine(removedMachine);
 
+			for (String affectedServer : serversInMachine) {
+				if (NodeName.getType(affectedServer) != NodeName.Type.BRANCHSERVER) {
+					continue;
+				}
+
+				String affectedService = NodeName.getService(affectedServer);			
+				View v = properties_.getServiceConfig().getView(affectedService);
+				v.removeServer(affectedServer);
+				
+				if (!updatedViews.contains(v.getGroupId())) {
+					viewsToUpdate.add(v);
+				}
+			}
+		}
+		
+		return viewsToUpdate;
 	}
 
 	private void sendToNeighbors(String msg) {
