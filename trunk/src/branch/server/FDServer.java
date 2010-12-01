@@ -94,15 +94,17 @@ public class FDServer implements Runnable {
 				Vector<String> new_suspects = consensusProtocol();
 				Collections.sort(new_suspects);
 				Collections.sort(prev_suspects_);
-				
-				machinesToAdd.clear();
-				machinesToRemove.clear();
-				
+
 				getMachinesToChange(prev_suspects_, new_suspects, machinesToAdd, machinesToRemove);
 				
-				Vector<View> viewsToUpdate = getViewsToUpdate(machinesToAdd, machinesToRemove);
+				Vector<View> viewsToUpdate = getViewsToUpdate(
+						machinesToAdd,
+						machinesToRemove,
+						properties_.getServiceConfig(),
+						properties_.getServerLocations());
 				Vector<String> serversInMyMachine =
 					properties_.getServerLocations().getServersForMachine(properties_.getMachineName());
+
 				for (View v : viewsToUpdate) {
 					for (String interestedServer : serversInMyMachine) {
 						if (NodeName.getType(interestedServer) != NodeName.Type.BRANCHSERVER) {
@@ -146,36 +148,35 @@ public class FDServer implements Runnable {
 		}
 	}
 
-	
-	public Vector<View> getViewsToUpdate(
+	public static Vector<View> getViewsToUpdate(
 			Vector<String> toAdd,
-			Vector<String> toRem) {
+			Vector<String> toRem,
+			ServiceConfig sc,
+			NodeLocations locs) {
 		HashSet<String> updatedViews = new HashSet<String>();
 		Vector<View> viewsToUpdate = new Vector<View>();
 		
 		for (String addedMachine : toAdd) {
-			Vector<String> serversInMachine =
-				properties_.getServerLocations().getServersForMachine(addedMachine);
+			Vector<String> serversInMachine = locs.getServersForMachine(addedMachine);
 
 			for (String affectedServer : serversInMachine) {
 				if (NodeName.getType(affectedServer) != NodeName.Type.BRANCHSERVER) {
 					continue;
 				}
 
-				String affectedService = NodeName.getService(affectedServer);			
-				View v = properties_.getServiceConfig().getView(affectedService);
+				String affectedService = NodeName.getService(affectedServer);
+				View v = sc.getView(affectedService);
 				v.addServer(affectedServer);
 				
 				if (!updatedViews.contains(v.getGroupId())) {
+					updatedViews.add(v.getGroupId());
 					viewsToUpdate.add(v);
 				}
 			}
-		}
-		
+		}		
 		
 		for (String removedMachine : toRem) {
-			Vector<String> serversInMachine =
-				properties_.getServerLocations().getServersForMachine(removedMachine);
+			Vector<String> serversInMachine = locs.getServersForMachine(removedMachine);
 
 			for (String affectedServer : serversInMachine) {
 				if (NodeName.getType(affectedServer) != NodeName.Type.BRANCHSERVER) {
@@ -183,10 +184,11 @@ public class FDServer implements Runnable {
 				}
 
 				String affectedService = NodeName.getService(affectedServer);			
-				View v = properties_.getServiceConfig().getView(affectedService);
+				View v = sc.getView(affectedService);
 				v.removeServer(affectedServer);
 				
 				if (!updatedViews.contains(v.getGroupId())) {
+					updatedViews.add(v.getGroupId());
 					viewsToUpdate.add(v);
 				}
 			}
@@ -236,7 +238,6 @@ public class FDServer implements Runnable {
 	}
 
 	class listenInit implements Runnable {
-
 		public void run() {
 			System.err.println("listentInit started");
 			int receivedCount = 0;
