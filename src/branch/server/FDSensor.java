@@ -21,7 +21,7 @@ public class FDSensor implements Runnable{
 	// TODO
 	public static int default_timeout = 10000;
 	private static int timeoutInc = 10;
-	public static int pingtime = default_timeout - timeoutInc;
+	public static int pingtime = default_timeout/2/* - timeoutInc*/;
 	private static String msgSeparator = "::";
 
 	Vector<String> output_;
@@ -52,10 +52,11 @@ public class FDSensor implements Runnable{
 		timeouts_ = new HashMap<String, Integer>();
 
 		for (String neighbor : neighbors_) {
-			timeouts_.put(neighbor, default_timeout);
+			String neighborMachine = NodeName.getMachineForServer(neighbor);
+			timeouts_.put(neighborMachine, default_timeout);
 			Timer timer = new Timer();
-			timer.schedule(new TimeoutCheck(neighbor), default_timeout);
-			timers.put(neighbor, timer);
+			timer.schedule(new TimeoutCheck(neighborMachine), default_timeout);
+			timers.put(neighborMachine, timer);
 		}
 	}
 	
@@ -125,7 +126,13 @@ public class FDSensor implements Runnable{
 				for (String neighbor : neighbors_) {
 					System.out.println(neighbor);
 					Location loc = properties_.getServerLocations().getLocationForNode(neighbor);
-					Socket socket = new Socket(loc.getIp(), loc.getPort());
+					Socket socket;
+					try {
+						socket = new Socket(loc.getIp(), loc.getPort());
+					} catch (Exception e) {
+						System.err.println(neighbor + " is not reachable.");
+						continue;
+					}
 					OutputStream oStream = socket.getOutputStream();
 					BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(oStream));
 					writer.write(msg);
@@ -133,6 +140,10 @@ public class FDSensor implements Runnable{
 					writer.close();
 				}
 
+				if (mySensorname_.equals("R02_M04")) {
+					Thread.sleep(90000);
+				}
+				
 				alivetimer.schedule(new AliveMsg(), pingtime);
 			} catch (Exception e) {
 				e.printStackTrace();

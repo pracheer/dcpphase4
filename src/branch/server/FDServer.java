@@ -29,6 +29,7 @@ public class FDServer implements Runnable {
 	private ArrayList<String> neighbors_;
 	private Semaphore listenSema_ = new Semaphore(0);
 	private Semaphore initSema_ = new Semaphore(0);
+	private Semaphore mutex = new Semaphore(0);
 	private boolean initFromServer_ = false;
 	private boolean initFromSensor_ = false;
 	private HashMap<String, Vector<String>> vp;
@@ -38,11 +39,11 @@ public class FDServer implements Runnable {
 	public FDServer(ServerProperties properties, FDSensor sensor) {
 		vp = new HashMap<String, Vector<String>>();
 		properties_ = properties;
-		
+
 		// Get the neighborlist. Remove myself from the list.
 		neighbors_ = properties.getMyView().getListOfServers();
 		neighbors_.remove(properties_.getServerName());
-		
+
 		sensor_ = sensor;
 		prev_suspects_ = new Vector<String>();
 		try {
@@ -70,12 +71,14 @@ public class FDServer implements Runnable {
 			e.printStackTrace();
 		}
 	}
-*/
+	 */
 	public void run() {
 		while(true) {
 			try {
 				serverSocket_.setSoTimeout(0);
-				initSema_.wait();
+				synchronized (initSema_) {
+					initSema_.wait();
+				}
 
 				if(initFromSensor_) {
 					// send server init msg to all FD servers
@@ -92,7 +95,9 @@ public class FDServer implements Runnable {
 
 				// TODO check the socket timeout.
 				serverSocket_.setSoTimeout(sleep_interval);
-				listenSema_.wait();
+				synchronized (initSema_) {
+					listenSema_.wait();
+				}
 				Vector<String> new_suspects = consensusProtocol();
 				Collections.sort(new_suspects);
 				Collections.sort(prev_suspects_);
@@ -102,8 +107,8 @@ public class FDServer implements Runnable {
 						System.out.print(new_suspect + ",");
 					}
 					System.out.println("");
-					
-					
+
+
 					// Addition of machine. (Just a dumb check).
 					// TODO
 					String machine = "";
@@ -115,6 +120,8 @@ public class FDServer implements Runnable {
 
 					// update views
 					//TODO need to send the new suspects to all the branch servers running on this machine.
+					initFromSensor_ = false;
+					initFromServer_ = false;
 				}
 
 			} catch (Exception e) {
@@ -122,13 +129,13 @@ public class FDServer implements Runnable {
 			}
 		}
 	}
-	
+
 	private void updateForMachineAddition(String machine) {
-		
+
 	}
-	
+
 	private void updateForMachineDeletion(String machine) {
-		
+
 	}
 
 	private void sendToNeighbors(String msg) {
@@ -184,7 +191,9 @@ public class FDServer implements Runnable {
 							clientSocket.getInputStream()));
 					str = in.readLine();
 				} catch (SocketTimeoutException  e) {
-					listenSema_.notify();
+					synchronized (initSema_) {
+						listenSema_.notify();
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -192,12 +201,16 @@ public class FDServer implements Runnable {
 				if(str.equals(serverInitMsg) && !initFromServer_ && !initFromSensor_) {
 					initFromServer_ = true;
 					receivedCount = 0;
-					initSema_.notify();
+					synchronized (initSema_) {
+						initSema_.notify();
+					}
 				}
 				else if (str.equals(sensorInitMsg) && !initFromSensor_ && !initFromServer_) {
 					initFromSensor_ = true;
 					receivedCount = 0;
-					initSema_.notify();
+					synchronized (initSema_) {
+						initSema_.notify();
+					}
 				} else {
 					if(str.equals(serverInitMsg) || str.equals(sensorInitMsg))
 						continue;
@@ -208,7 +221,9 @@ public class FDServer implements Runnable {
 
 					receivedCount += 1;
 					if (receivedCount == neighbors_.size()- 1) {
-						listenSema_.notify();
+						synchronized (initSema_) {
+							listenSema_.notify();
+						}
 					}	
 				}
 			}
