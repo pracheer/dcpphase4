@@ -37,19 +37,7 @@ public class NodeName {
 			return node;
 		case SENSOR:
 			return getServiceForServer(node);
-
-		default:
-			break;
 		}
-		if(NodeName.isGui(node))
-			return getServiceForGui(node);
-		else if(NodeName.isBranchServer(node))
-			return getServiceForServer(node);
-		else if(NodeName.isSensor(node))
-			return getServiceForServer(node);
-		else if(NodeName.isFailureDetectionServer(node))
-			return getFailureDetectionService(node);
-		
 		return null;
 	}
 	
