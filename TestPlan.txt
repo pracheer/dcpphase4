@@ -10,13 +10,18 @@ eg: java -cp <jar file> branch.server.BranchServer -topology <filename> -id G01 
 Test Cases:
 We have included unit tests with our src under the "test" package.
 
+SensorTest:
+We created one FDSensorTest that starts multiple sensors.
+We manually stop some sensors and see that the other sensors are able to see the change (by debug message).
+Then bringing up the sensor again is reflected in the sensor graph.
+We also put one sensor in sleep and see that the other sensors wait for response from that sensor to reach a consensus.
+
 Besides that the following scenarios were tested manually-
 
 TEST 1:
 1. A single service was started with a single server.
 2. Initial configuration through config file.
 3. All transfer, deposit, withdraw and query worked fine within the same service.
-
 
 TEST 2: 
 1. A single service was started with 3 servers.
