@@ -21,7 +21,7 @@ import branch.server.NodeLocations.Location;
 
 public class FDServer implements Runnable {
 
-	private static int sleep_interval = 3000;
+	private static int sleep_interval = 600;
 	private static String serverInitMsg = "INIT_FROM_SERVER";
 	public static String sensorInitMsg = "INIT_FROM_SENSOR";
 
@@ -76,6 +76,9 @@ public class FDServer implements Runnable {
 					// send server init msg to all FD servers
 					sendToNeighbors(serverInitMsg);
 				}
+				
+				Thread.sleep(FDSensor.default_timeout);
+				
 				System.out.println(" Init sema woken up due to " + ((initFromSensor_)? "SENSOR": "SERVER"));
 				Vector<String> proposed_suspects = sensor_.getOutput();
 				vp.put(properties_.getMachineName(), proposed_suspects);
@@ -85,13 +88,15 @@ public class FDServer implements Runnable {
 				String msg = obj.toString();
 				sendToNeighbors(msg);
 
-				// TODO check the socket timeout.
 				serverSocket_.setSoTimeout(sleep_interval);
 				System.err.println("Setting timeout");
 				// Wait for others to reply to your broadcast
 				listenSema_.acquire();
 				
+				
+				
 				Vector<String> new_suspects = consensusProtocol();
+				
 				
 				// TODO 
 				// Remove the sort and comments.
@@ -101,13 +106,26 @@ public class FDServer implements Runnable {
 					System.err.println(" SUSPECTS CHANGED");
 				System.out.println("New suspects after consesus :" + new_suspects.toString());
 
+				System.out.println("Prev:");
+				System.out.println(prev_suspects_);
+				System.out.println("New:");
+				System.out.println(new_suspects);
 				getMachinesToChange(prev_suspects_, new_suspects, machinesToAdd, machinesToRemove);
 				
+				System.out.println("ToAdd:");
+				System.out.println(machinesToAdd);
+				System.out.println("ToRem:");
+				System.out.println(machinesToRemove);
+
 				Vector<View> viewsToUpdate = getViewsToUpdate(
 						machinesToAdd,
 						machinesToRemove,
 						properties_.getServiceConfig(),
 						properties_.getServerLocations());
+				
+				System.out.println("Views:");
+				System.out.println(viewsToUpdate);
+				
 				Vector<String> serversInMyMachine =
 					properties_.getServerLocations().getServersForMachine(properties_.getMachineName());
 
@@ -150,13 +168,13 @@ public class FDServer implements Runnable {
 		
 		for (String newS : newSuspects) {
 			if (!prvSuspects.contains(newS)) {
-				machinesToAdd.add(newS);
+				machinesToRemove.add(newS);
 			}
 		}
 		
 		for (String prvS : prvSuspects) {
 			if (!newSuspects.contains(prvS)) {
-				machinesToRemove.add(prvS);
+				machinesToAdd.add(prvS);
 			}
 		}
 	}
@@ -173,6 +191,12 @@ public class FDServer implements Runnable {
 			Vector<String> serversInMachine = locs.getServersForMachine(addedMachine);
 
 			for (String affectedServer : serversInMachine) {
+				if (NodeName.getType(affectedServer) == NodeName.Type.FAILUREDETECTIONSERVER) {
+					String affectedService = NodeName.getService(affectedServer);
+					View v = sc.getView(affectedService);
+					v.addServer(affectedServer);
+					continue;
+				}
 				if (NodeName.getType(affectedServer) != NodeName.Type.BRANCHSERVER) {
 					continue;
 				}
@@ -192,6 +216,12 @@ public class FDServer implements Runnable {
 			Vector<String> serversInMachine = locs.getServersForMachine(removedMachine);
 
 			for (String affectedServer : serversInMachine) {
+				if (NodeName.getType(affectedServer) == NodeName.Type.FAILUREDETECTIONSERVER) {
+					String affectedService = NodeName.getService(affectedServer);
+					View v = sc.getView(affectedService);
+					v.removeServer(affectedServer);
+					continue;
+				}
 				if (NodeName.getType(affectedServer) != NodeName.Type.BRANCHSERVER) {
 					continue;
 				}
@@ -257,7 +287,6 @@ public class FDServer implements Runnable {
 
 	class listenInit implements Runnable {
 		public void run() {
-			System.err.println("listentInit started");
 			receivedCount_ = 0;
 			String str = "";
 			while(true) {
