@@ -109,13 +109,7 @@ public class NetworkWrapper {
 
 			s = new Socket(serverLocation.getIp(), serverLocation.getPort());
 		} catch (UnknownHostException e) {
-			System.err.println("Could not create socket for " + server.toString());
-			System.err.println(e.getMessage());
-			e.printStackTrace();
 		} catch (IOException e) {
-			System.err.println("Could not create socket for " + server.toString());
-			System.err.println(e.getMessage());
-			e.printStackTrace();
 		}
 		
 		return s;
