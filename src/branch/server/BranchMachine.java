@@ -64,6 +64,9 @@ public class BranchMachine {
 				fdThread.start();
 				break;
 
+			case SENSOR:
+				break;
+				
 			default:
 				System.err.println("Error occurred. Invalid kind of server : " + server);
 			}
